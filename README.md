@@ -6,23 +6,33 @@
 - Python 3.8+
 - Typed (IDE friendly)
 
-There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability; also there's a PEP on it's way for a match construct. However, I wanted something which works well and works now, so here we are.
+There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
+also there's a PEP on it's way for a match construct. However, I wanted something which works well and works now,
+so here we are.
 
-_`amp`_ defines patterns as objects which are composable and reusable. Patterns can be matched and captured into variables, must like pattern matching in Haskell or Scala (a feature which most libraries actually lack, but which also makes pattern matching useful in the first place - the capability to easily extract data). Capturing pieces of the input is very similar to the way capturing groups work in regular expressions, just a bit more noisy. Here is an example:
+_`amp`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
+variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack,
+but which also makes pattern matching useful in the first place - the capability to easily extract data).
+Capturing pieces of the input is very similar to the way capturing groups work in regular expressions,
+just a bit more noisy. Here is an example:
 
 ```python
-match(value, [Capture(..., name="fst"), Capture(..., name="snd")])
+match(value, ["first", Capture(..., name="2nd"), Capture(..., name="3rd")])
 ```
 
-The above example matches a list of exactly two elements and captures the first and second element as `fst` and `snd`. `match` returns a `MatchResult` which can be used to access `fst` and `snd`:
+The above example matches a list of exactly three elements, the first element being exactly `"first"`, the seconds
+and third being anything (`...` – the ellipsis is actual syntax and performs a wildcard match).
+It captures the seconds and third elements as `2nd` and `3rd` respectively. `match` returns a `MatchResult` which
+can be used to access `2nd` and `3rd`:
 
 ```python
-if result := match(value, [Capture(..., name="fst"), Capture(..., name="snd")]):
-    result['fst']  # first element
-    result['snd']  # second element
+if result := match(value, ["first", Capture(..., name="2nd"), Capture(..., name="3rd")]):
+    result['2nd']  # first element
+    result['3rd']  # second element
 ```
 
-Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`. Since patterns are objects, they can be stored in variables and be reused.
+Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`.
+Since patterns are objects, they can be stored in variables and be reused.
 
 ```python
 positive_number = InstanceOf(int) & Check(lambda x: x >= 0)
@@ -48,56 +58,6 @@ record = {
 
 if result := match(record, {"First-Name": Capture(Regex("[A-Z][a-z]*"), name="name")}):
     print(result['name'])
-```
-
-## Some Features
-
-Demonstrated below: Junction of Patterns using `&`, `Strict` dictionary matching, `Each`.
-
-```python
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz"
-    }
-]
-
-assertTrue(
-    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
-
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz",
-        "Strict": "Does not allow unknown keys"
-    }
-]
-
-assertFalse(
-    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
-
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz",
-        "No Problem": "When Not Strict"
-    }
-]
-
-assertTrue(  # Note how this pattern is the same as above but without `Strict`
-    match(records, Each({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")})))
 ```
 
 ## Very slim User Guide
@@ -198,4 +158,54 @@ class Min(Pattern):
 
 match(3, Min(1))  # matches
 match(3, Min(5))  # does not match
+```
+
+## More Examples
+
+Demonstrated below: Junction of Patterns using `&`, `Strict` dictionary matching, `Each`.
+
+```python
+records = [
+    {
+        "Foo": 1,
+        "Bar": "Quux"
+    },
+    {
+        "Foo": 2,
+        "Bar": "Baz"
+    }
+]
+
+assertTrue(
+    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
+
+records = [
+    {
+        "Foo": 1,
+        "Bar": "Quux"
+    },
+    {
+        "Foo": 2,
+        "Bar": "Baz",
+        "Strict": "Does not allow unknown keys"
+    }
+]
+
+assertFalse(
+    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
+
+records = [
+    {
+        "Foo": 1,
+        "Bar": "Quux"
+    },
+    {
+        "Foo": 2,
+        "Bar": "Baz",
+        "No Problem": "When Not Strict"
+    }
+]
+
+assertTrue(  # Note how this pattern is the same as above but without `Strict`
+    match(records, Each({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")})))
 ```
