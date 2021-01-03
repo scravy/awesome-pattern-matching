@@ -1,4 +1,4 @@
-# Awesome Python Pattern Matching
+# Awesome Pattern Matching (_amp_) for Python
 
 - Simple
 - Powerful
@@ -6,11 +6,35 @@
 - Python 3.8+
 - Typed (IDE friendly)
 
-Available via `pip` ( [https://pypi.org/project/awesome-pattern-matching/](https://pypi.org/project/awesome-pattern-matching/) )
+There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability; also there's a PEP on it's way for a match construct. However, I wanted something which works well and works now, so here we are.
+
+_`amp`_ defines patterns as objects which are composable and reusable. Patterns can be matched and captured into variables, must like pattern matching in Haskell or Scala (a feature which most libraries actually lack, but which also makes pattern matching useful in the first place - the capability to easily extract data). Capturing pieces of the input is very similar to the way capturing groups work in regular expressions, just a bit more noisy. Here is an example:
+
+```python
+match(value, [Capture(..., name="fst"), Capture(..., name="snd")])
+```
+
+The above example matches a list of exactly two elements and captures the first and second element as `fst` and `snd`. `match` returns a `MatchResult` which can be used to access `fst` and `snd`:
+
+```python
+if result := match(value, [Capture(..., name="fst"), Capture(..., name="snd")]):
+    result['fst']  # first element
+    result['snd']  # second element
+```
+
+Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`. Since patterns are objects, they can be stored in variables and be reused.
+
+```python
+positive_number = InstanceOf(int) & Check(lambda x: x >= 0)
+```
+
+## Installation
 
 ```python
 pip install awesome-pattern-matching
 ```
+
+## Usage
 
 ```python
 from apm import *
