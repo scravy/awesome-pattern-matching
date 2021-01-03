@@ -22,6 +22,35 @@ class BasicUseCases(unittest.TestCase):
             Strict({"foo": positive_number, "bar": positive_number})
         ))
 
+    def test_tuple(self):
+        self.assertTrue(match(
+            (1, 2),
+            (..., ...)
+        ))
+
+    def test_strict(self):
+        self.assertTrue(match(1, 1.0))
+        self.assertTrue(match(1.0, Strict(1.0)))
+        self.assertTrue(match(1, Strict(1)))
+        self.assertFalse(match(1, Strict(1.0)))
+
+    def test_truish(self):
+        self.assertTrue(match(1, Truish()))
+        self.assertTrue(match(2.9, Truish()))
+        self.assertFalse(match("", Truish()))
+
+    def test_length(self):
+        self.assertTrue(match([], Length(0)))
+        self.assertTrue(match(('abc',), Length(1)))
+        self.assertTrue(match('abc', Length(3)))
+
+    def test_contains(self):
+        self.assertTrue(match([1, 2, 3], Contains(2) & Contains(3)))
+        self.assertTrue(match((1, 2, 3), Contains(2) & Contains(3)))
+        self.assertTrue(match({1, 2, 3}, Contains(2) & Contains(3)))
+        self.assertTrue(match({1: 'a', 2: 'b', 3: 'c'}, Contains(2) & Contains(3)))
+        self.assertTrue(match("quux", Contains('uu')))
+
     def test_regex(self):
         self.assertTrue(match(
             "Hello, World!",
@@ -141,10 +170,40 @@ class BasicUseCases(unittest.TestCase):
             Between(0, 1) ^ Between(1, 2)
         ))
 
+    def test_each(self):
+        self.assertTrue(match([1, 2, 3], Each(InstanceOf(int))))
+        self.assertFalse(match([1, 2.0, 3], Each(InstanceOf(int))))
+
+    def test_each_item(self):
+        pattern = EachItem(Regex("[a-z]+"), InstanceOf(int))
+        self.assertTrue(match({"a": 1, "b": 2}, pattern))
+        self.assertFalse(match({"_a": 1, "b": 2}, pattern))
+
+    def test_transformed(self):
+        self.assertTrue(match("value", Transformed(len, 5)))
+
+    def test_arguments(self):
+        # noinspection PyUnusedLocal
+        def f(x: int, y: str):
+            pass
+
+        # noinspection PyUnusedLocal
+        def g(x):
+            pass
+
+        # noinspection PyUnusedLocal
+        def h(x, y: int, m: str, n: str):
+            pass
+
+        self.assertTrue(match(f, Arguments(int, str)))
+        self.assertFalse(match(g, Arguments(int)))
+        self.assertTrue(match(h, Arguments(None, int, Remaining(str))))
+
 
 class TypingUtil(unittest.TestCase):
 
     def test_get_arg_types(self):
+        # noinspection PyUnusedLocal
         def f(a: int, b: float, c: str, d: str) -> str:
             pass
 
@@ -235,6 +294,7 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match("quux", OneOf("bar", "baz", "quux")))
 
         class Min(Pattern):
+            # noinspection PyShadowingBuiltins
             def __init__(self, min):
                 self.min = min
 

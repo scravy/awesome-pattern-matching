@@ -14,6 +14,9 @@ class MatchContext:
     def __contains__(self, item):
         return item in self.groups
 
+    def match(self, value, pattern, strict=False) -> MatchResult:
+        return _match(value, pattern, ctx=self, strict=strict)
+
     def matches(self) -> MatchResult:
         return MatchResult(matches=True, context=self)
 
@@ -21,7 +24,7 @@ class MatchContext:
         return MatchResult(matches=False, context=self)
 
     def match_if(self, condition: bool) -> MatchResult:
-        return MatchResult(matches=condition, context=self)
+        return MatchResult(matches=bool(condition), context=self)
 
 
 class MatchResult:
@@ -40,6 +43,12 @@ class MatchResult:
 
     def __repr__(self):
         return f"MatchResult(matches={self._matches}, groups={self._context.groups})"
+
+    def __iter__(self):
+        return iter(self._context.groups)
+
+    def items(self):
+        return self._context.groups.items()
 
 
 class Pattern:
@@ -86,7 +95,6 @@ class Capture(Pattern):
 
 
 class RemainingMeta(type):
-
     def __instancecheck__(self, instance):
         if isinstance(instance, Capture):
             # noinspection PyProtectedMember
@@ -103,20 +111,6 @@ class Remaining(metaclass=RemainingMeta):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return _match(value, self.pattern, ctx=ctx, strict=strict)
-
-
-class Each(Pattern):
-    def __init__(self, pattern, /, *, at_least: int = 0):
-        self._pattern = pattern
-        self._at_least = at_least
-
-    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        count = 0
-        for item in value:
-            if not (result := _match(item, self._pattern, ctx=ctx)):
-                return result
-            count += 1
-        return ctx.match_if(count >= self._at_least)
 
 
 class Strict(Pattern):
@@ -172,6 +166,8 @@ class Not(Pattern):
 
 def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchResult:
     if pattern == value:
+        if strict:
+            return ctx.match_if(type(pattern) == type(value))
         return ctx.matches()
 
     if pattern is Ellipsis:
@@ -197,6 +193,14 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
         for key in pattern:
             if key not in matched_keys:
                 return ctx.no_match()
+        return ctx.matches()
+
+    if isinstance(pattern, tuple):
+        if not isinstance(value, tuple) or len(pattern) != len(value):
+            return ctx.no_match()
+        for p, v in zip(pattern, value):
+            if not (result := _match(v, p, ctx=ctx)):
+                return result
         return ctx.matches()
 
     if isinstance(pattern, list):

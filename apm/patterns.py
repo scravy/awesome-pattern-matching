@@ -1,7 +1,9 @@
 import operator as ops
 import re
+from typing import Callable
 
 from . import Pattern, MatchContext, MatchResult
+from .util import get_arg_types
 
 
 class Check(Pattern):
@@ -40,3 +42,69 @@ class Between(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict=False) -> MatchResult:
         return ctx.match_if(self.op_lower(value, self.lower) and self.op_upper(value, self.upper))
+
+
+class Length(Pattern):
+    def __init__(self, length):
+        self._length = length
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(len(value) == self._length)
+
+
+class Truish(Pattern):
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(value)
+
+
+class Contains(Pattern):
+    def __init__(self, needle):
+        self._needle = needle
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(self._needle in value)
+
+
+class Transformed(Pattern):
+    def __init__(self, f: Callable, pattern):
+        self._f = f
+        self._pattern = pattern
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match(self._f(value), self._pattern, strict=strict)
+
+
+class Arguments(Pattern):
+    def __init__(self, *arg_patterns):
+        self._pattern = list(arg_patterns)
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match(get_arg_types(value), self._pattern)
+
+
+class Each(Pattern):
+    def __init__(self, pattern, /, *, at_least: int = 0):
+        self._pattern = pattern
+        self._at_least = at_least
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        count = 0
+        for item in value:
+            if not (result := ctx.match(item, self._pattern)):
+                return result
+            count += 1
+        return ctx.match_if(count >= self._at_least)
+
+
+class EachItem(Pattern):
+    def __init__(self, key_pattern, value_pattern, /):
+        self._key_pattern = key_pattern
+        self._value_pattern = value_pattern
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        for k, v in value.items():
+            if not (result := ctx.match(k, self._key_pattern)):
+                return result
+            if not (result := ctx.match(v, self._value_pattern)):
+                return result
+        return ctx.matches()
