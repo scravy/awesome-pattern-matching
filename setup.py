@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 __pkginfo__ = {}
-with open("jinsi/__pkginfo__.py") as fh:
+with open("apm/__pkginfo__.py") as fh:
     exec(fh.read(), __pkginfo__)
 
 
@@ -13,11 +13,11 @@ class Info:
 
 
 setuptools.setup(
-    name="ornament",
+    name="awesome_pattern_matching",
     version=Info.version,
     author="Julian Fleischer",
     author_email="tirednesscankill@warhog.net",
-    description="JSON/YAML homoiconic templating language",
+    description="Awesome Pattern Matching",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/scravy/ornament",
