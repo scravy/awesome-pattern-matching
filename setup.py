@@ -13,14 +13,14 @@ class Info:
 
 
 setuptools.setup(
-    name="awesome_pattern_matching",
+    name="awesome-pattern-matching",
     version=Info.version,
     author="Julian Fleischer",
     author_email="tirednesscankill@warhog.net",
     description="Awesome Pattern Matching",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/scravy/ornament",
+    url="https://github.com/scravy/awesome-pattern-matching",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
