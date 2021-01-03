@@ -4,6 +4,14 @@ import re
 from . import Pattern, MatchContext, MatchResult
 
 
+class Check(Pattern):
+    def __init__(self, condition, /):
+        self._condition = condition
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(self._condition(value))
+
+
 class Regex(Pattern):
     def __init__(self, regex, /):
         self._regex = re.compile(regex)

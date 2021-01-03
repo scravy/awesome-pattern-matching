@@ -222,10 +222,16 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
                 ctx[remaining.name] = result_value
             return ctx.match_if(count >= remaining.at_least)
         count = 0
-        for p, v in zip(pattern, value):
+        it = iter(value)
+        for p, v in zip(pattern, it):
             count += 1
             if not (result := _match(v, p, ctx=ctx)):
                 return result
+        try:
+            next(it)
+            return ctx.no_match()
+        except StopIteration:
+            pass
         return ctx.match_if(count == len(pattern))
 
     return ctx.no_match()
