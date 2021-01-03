@@ -1,4 +1,4 @@
-# Awesome Pattern Matching (_amp_) for Python
+# Awesome Pattern Matching (_apm_) for Python
 
 - Simple
 - Powerful
@@ -7,10 +7,10 @@
 - Typed (IDE friendly)
 
 There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
-also there's a PEP on it's way for a match construct. However, I wanted something which works well and works now,
-so here we are.
+also [there's a PEP on it's way for a match construct](https://www.python.org/dev/peps/pep-0634/).
+However, I wanted something which works well and works now, so here we are.
 
-_`amp`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
+_`apm`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
 variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack,
 but which also makes pattern matching useful in the first place - the capability to easily extract data).
 Capturing pieces of the input is very similar to the way capturing groups work in regular expressions,
