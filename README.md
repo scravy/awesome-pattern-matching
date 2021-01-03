@@ -6,6 +6,12 @@
 - Python 3.8+
 - Typed (IDE friendly)
 
+Available via `pip` ( [https://pypi.org/project/awesome-pattern-matching/](https://pypi.org/project/awesome-pattern-matching/) )
+
+```python
+pip install awesome-pattern-matching
+```
+
 ```python
 from apm import *
 from apm.patterns import Regex
