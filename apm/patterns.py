@@ -3,7 +3,7 @@ import re
 from typing import Callable
 
 from . import Pattern, MatchContext, MatchResult
-from .util import get_arg_types
+from .util import get_arg_types, get_return_type
 
 
 class Check(Pattern):
@@ -80,6 +80,14 @@ class Arguments(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match(get_arg_types(value), self._pattern)
+
+
+class Returns(Pattern):
+    def __init__(self, pattern, /):
+        self._pattern = pattern
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match(get_return_type(value), self._pattern)
 
 
 class Each(Pattern):

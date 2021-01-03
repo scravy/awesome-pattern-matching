@@ -199,6 +199,13 @@ class BasicUseCases(unittest.TestCase):
         self.assertFalse(match(g, Arguments(int)))
         self.assertTrue(match(h, Arguments(None, int, Remaining(str))))
 
+    def test_returns(self):
+        def f() -> int:
+            pass
+
+        self.assertTrue(match(f, Returns(int)))
+        self.assertFalse(match(f, Returns(float)))
+
 
 class TypingUtil(unittest.TestCase):
 

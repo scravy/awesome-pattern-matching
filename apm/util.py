@@ -14,7 +14,7 @@ def get_arg_types(obj) -> List[Optional[Type]]:
     return args
 
 
-def get_result_type(obj) -> Optional[Type]:
+def get_return_type(obj) -> Optional[Type]:
     if 'return' in obj.__annotations__:
         return obj.__annotations__['return']
     return None
