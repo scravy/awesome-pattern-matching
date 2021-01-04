@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import unittest
 
+# noinspection PyProtectedMember
 import apm._util as util
 from apm import *
 

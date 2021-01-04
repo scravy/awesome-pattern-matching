@@ -33,6 +33,14 @@ class InstanceOf(Pattern):
         return ctx.match_if(isinstance(value, self._type))
 
 
+class SubclassOf(Pattern):
+    def __init__(self, *type_: type):
+        self._type = type_
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(issubclass(value, self._type))
+
+
 class Between(Pattern):
     def __init__(self, lower, upper, *, lower_bound_exclusive=False, upper_bound_exclusive=False):
         self.lower = lower
