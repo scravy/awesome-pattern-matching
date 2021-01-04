@@ -2,8 +2,8 @@ import operator as ops
 import re
 from typing import Callable
 
-from . import Pattern, MatchContext, MatchResult
-from .util import get_arg_types, get_return_type
+from .core import Pattern, MatchContext, MatchResult
+from ._util import get_arg_types, get_return_type
 
 
 class Check(Pattern):
@@ -45,7 +45,7 @@ class Between(Pattern):
 
 
 class Length(Pattern):
-    def __init__(self, length):
+    def __init__(self, length, /):
         self._length = length
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -66,7 +66,7 @@ class Contains(Pattern):
 
 
 class Transformed(Pattern):
-    def __init__(self, f: Callable, pattern):
+    def __init__(self, f: Callable, pattern, /):
         self._f = f
         self._pattern = pattern
 

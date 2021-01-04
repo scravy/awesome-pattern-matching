@@ -1,7 +1,7 @@
 import unittest
 
+import apm._util as util
 from apm import *
-from apm.patterns import *
 
 
 class TypingUtil(unittest.TestCase):
@@ -11,7 +11,7 @@ class TypingUtil(unittest.TestCase):
         def f(a: int, b: float, c: str, d: str) -> str:
             pass
 
-        arg_types = get_arg_types(f)
+        arg_types = util.get_arg_types(f)
         self.assertTrue(match(
             arg_types,
             [int, float, Remaining(str)]

@@ -7,14 +7,9 @@ __pkginfo__ = {}
 with open("apm/__pkginfo__.py") as fh:
     exec(fh.read(), __pkginfo__)
 
-
-class Info:
-    version = __pkginfo__.get("version", None)
-
-
 setuptools.setup(
     name="awesome-pattern-matching",
-    version=Info.version,
+    version=__pkginfo__['__version__'],
     author="Julian Fleischer",
     author_email="tirednesscankill@warhog.net",
     description="Awesome Pattern Matching",

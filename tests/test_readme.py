@@ -1,7 +1,6 @@
 import unittest
 
 from apm import *
-from apm.patterns import *
 
 
 class ReadmeExamples(unittest.TestCase):
@@ -83,11 +82,13 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match(range(1, 10), Each(Between(1, 9))))
         self.assertTrue(match("quux", OneOf("bar", "baz", "quux")))
 
+        # noinspection PyUnusedLocal
         def f(x: int, y: float, z):
             ...
 
         self.assertTrue(match(f, Arguments(int, float, None)))
 
+        # noinspection PyUnusedLocal
         def g(x: int) -> str:
             ...
 
