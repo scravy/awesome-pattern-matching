@@ -206,6 +206,25 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(match(f, Returns(int)))
         self.assertFalse(match(f, Returns(float)))
 
+    def test_at(self):
+        record = {
+            "foo": {
+                "bar": {
+                    "quux": {
+                        "value": "deeply nested"
+                    }
+                }
+            }
+        }
+
+        self.assertTrue(result := match(record, At("foo.bar.quux", {"value": Capture(..., name="value")})))
+        self.assertEqual("deeply nested", result['value'])
+
+        self.assertTrue(result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="value")})))
+        self.assertEqual("deeply nested", result['value'])
+
+        self.assertFalse(match(record, At("foo.bar.quux.baz", InstanceOf(int))))
+
 
 class TypingUtil(unittest.TestCase):
 
@@ -299,6 +318,29 @@ class ReadmeExamples(unittest.TestCase):
         self.assertEqual([3, 4], result['tail'])
         self.assertTrue(match(range(1, 10), Each(Between(1, 9))))
         self.assertTrue(match("quux", OneOf("bar", "baz", "quux")))
+
+        def f(x: int, y: float, z):
+            ...
+
+        self.assertTrue(match(f, Arguments(int, float, None)))
+
+        def g(x: int) -> str:
+            ...
+
+        self.assertTrue(match(g, Arguments(int) & Returns(str)))
+
+        def sha256(v: str) -> str:
+            import hashlib
+            return hashlib.new('sha256', v.encode('utf8')).hexdigest()
+
+        self.assertTrue(
+            match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")))
+
+        self.assertTrue(match({"a": 3, "b": 7}, {"a": ...}))
+        self.assertTrue(match(3.0, 3))
+
+        self.assertFalse(match({"a": 3, "b": 7}, Strict({"a": ...})))
+        self.assertFalse(match(3.0, Strict(3)))
 
         class Min(Pattern):
             # noinspection PyShadowingBuiltins

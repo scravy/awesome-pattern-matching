@@ -1,4 +1,4 @@
-from inspect import CO_VARARGS
+from inspect import CO_VARARGS  # pylint: disable=no-name-in-module
 from types import CodeType
 from typing import List, Optional, Type
 

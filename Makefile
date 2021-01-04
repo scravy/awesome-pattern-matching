@@ -1,5 +1,8 @@
-test:
+test: lint
 	python3 -m unittest
+
+lint:
+	pylint --disable=C,R,W apm
 
 venv:
 	python3 -m venv .venv
@@ -19,4 +22,4 @@ publish-test: dist
 publish: dist
 	python3 -m twine upload dist/*
 
-.PHONY: test build dist publish clean publish publish-prod
+.PHONY: test lint build dist publish clean publish publish-prod

@@ -74,7 +74,7 @@ class Capture(Pattern):
         self._name: str = name
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        if result := _match(value, self._pattern, ctx=ctx):
+        if result := ctx.match(value, self._pattern):
             ctx[self._name] = value
             return result
         return ctx.no_match()
@@ -110,7 +110,7 @@ class Remaining(metaclass=RemainingMeta):
         self.name = ""
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return _match(value, self.pattern, ctx=ctx, strict=strict)
+        return ctx.match(value, self.pattern, strict=strict)
 
 
 class Strict(Pattern):
@@ -118,7 +118,7 @@ class Strict(Pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return _match(value, self._pattern, ctx=ctx, strict=True)
+        return ctx.match(value, self._pattern, strict=True)
 
 
 class OneOf(Pattern):
@@ -127,7 +127,7 @@ class OneOf(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         for pattern in self._patterns:
-            if result := _match(value, pattern, ctx=ctx):
+            if result := ctx.match(value, pattern):
                 return result
         return ctx.no_match()
 
@@ -138,7 +138,7 @@ class AllOf(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         for pattern in self._patterns:
-            if not (result := _match(value, pattern, ctx=ctx)):
+            if not (result := ctx.match(value, pattern)):
                 return result
         return ctx.matches()
 
@@ -149,8 +149,8 @@ class Either(Pattern):
         self._right = right
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        match_left = _match(value, self._left, ctx=ctx, strict=strict)
-        match_right = _match(value, self._right, ctx=ctx, strict=strict)
+        match_left = ctx.match(value, self._left, strict=strict)
+        match_right = ctx.match(value, self._right, strict=strict)
         return ctx.match_if(bool(match_left) != bool(match_right))
 
 
@@ -159,7 +159,7 @@ class Not(Pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        if _match(value, self._pattern, ctx=ctx, strict=False):
+        if ctx.match(value, self._pattern, strict=False):
             return ctx.no_match()
         return ctx.matches()
 
@@ -184,7 +184,7 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
         matched_keys = set()
         for key, value in items:
             if key in pattern:
-                if not (result := _match(value, pattern[key], ctx=ctx)):
+                if not (result := ctx.match(value, pattern[key])):
                     return result
                 matched_keys.add(key)
             else:
@@ -199,11 +199,13 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
         if not isinstance(value, tuple) or len(pattern) != len(value):
             return ctx.no_match()
         for p, v in zip(pattern, value):
-            if not (result := _match(v, p, ctx=ctx)):
+            if not (result := ctx.match(v, p)):
                 return result
         return ctx.matches()
 
     if isinstance(pattern, list):
+        if strict and type(value) != list:
+            return ctx.no_match()
         if pattern and isinstance(pattern[-1], Remaining):
             remaining: Remaining = pattern[-1]
             it = iter(value)
@@ -212,13 +214,13 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
                     v = next(it)
                 except StopIteration:
                     return ctx.no_match()
-                if not (result := _match(v, p, ctx=ctx)):
+                if not (result := ctx.match(v, p)):
                     return result
             count = 0
             result_value = []
             for v in it:
                 count += 1
-                if not (result := _match(v, remaining.pattern, ctx=ctx)):
+                if not (result := ctx.match(v, remaining.pattern)):
                     return result
                 if remaining.name:
                     result_value.append(v)
@@ -229,7 +231,7 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
         it = iter(value)
         for p, v in zip(pattern, it):
             count += 1
-            if not (result := _match(v, p, ctx=ctx)):
+            if not (result := ctx.match(v, p)):
                 return result
         try:
             next(it)

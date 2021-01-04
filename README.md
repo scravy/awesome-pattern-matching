@@ -127,7 +127,45 @@ if result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name
     print(result['tail'])  ## -> [3, 4]
 ```
 
-### `Each(pattern [, at_least=]` (`apm.*`)
+### `Strict(pattern)` (`apm.*`)
+
+Performs a strict pattern match. A strict pattern match also compares the type of verbatim values. That is, while
+_`apm`_ would match `3` with `3.0` it would not do so when using `Strict`. Also _`apm`_ performs partial matches
+of dictionaries (that is: it ignores unknown keys). It will perform an exact match for dictionaries using `Strict`.
+
+```python
+# The following will match
+match({"a": 3, "b": 7}, {"a": ...})
+match(3.0, 3)
+
+# These will not match
+match({"a": 3, "b": 7}, Strict({"a": ...}))
+match(3.0, Strict(3))
+```
+
+### `OneOf(pattern1, pattern2, ..)` (`apm.*`)
+
+Matches against any of the provided patterns. Equivalent to `p1 | p2 | p3 | ..`
+(but operator overloading does not work with values that do not inherit from `Pattern`)
+
+```python
+match("quux", OneOf("bar", "baz", "quux"))
+```
+
+```python
+match(3, OneOf(InstanceOf(int), None))
+```
+
+### `AllOf(pattern1, pattern2, ..)` (`apm.*`)
+
+Checks whether the value matches all of the given pattern. Equivalent to `p1 & p2 & p3 & ..`
+(but operator overloading does not work with values that do not inherit from `Pattern`)
+
+```python
+match("quux", AllOf(InstanceOf("str"), Regex("[a-z]+")))
+```
+
+### `Each(pattern [, at_least=]` (`apm.patterns.*`)
 
 Matches each item in an iterable.
 
@@ -135,13 +173,87 @@ Matches each item in an iterable.
 match(range(1, 10), Each(Between(1, 9)))
 ```
 
-### `OneOf(pattern1, pattern2, ...)` (`apm.*`)
+### `EachItem(key_pattern, value_pattern)` (`apm.patterns.*`)
 
-Matches against any of the provided patterns. Equivalent to `p1 | p2 | p3`
-(but operator overloading does not work with values that do not inherit from `Pattern`)
+Matches an object if each key satisfies `key_pattern` and each value satisfies `value_pattern`.
 
 ```python
-match("quux", OneOf("bar", "baz", "quux"))
+match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
+```
+
+### `Check(predicate)` (`apm.patterns.*`)
+
+Matches an object if it satisfies the given predicate.
+
+```python
+match(2, Check(lambda x: x % 2 == 0))
+```
+
+### `InstanceOf(type1 [, type2 [, ..]])` (`apm.patterns.*`)
+
+Matches an object if it is an instance of any of the given types.
+
+```python
+match(1, InstanceOf(int, flaot))
+```
+
+### `Arguments(type1 [, type2 [, ..]])` (`apm.patterns.*`)
+
+Matches a callable if it's type annotations correspond to the given types.
+Very useful for implementing rich APIs.
+
+```python
+def f(x: int, y: float, z):
+    ...
+
+match(f, Arguments(int, float, None))
+```
+
+### `Returns(type)` (`apm.patterns.*`)
+
+Matches a callable if it's type annotations denote the given return type.
+
+```python
+def g(x: int) -> str:
+    ...
+
+match(g, Arguments(int) & Returns(str))
+```
+
+### `Transformed(function, pattern)` (`apm.patterns.*`)
+
+Transforms the currently looked at value by applying `function` on it and matches the result against `pattern`.
+In Haskell and other languages this is known as a [_view pattern_](https://gitlab.haskell.org/ghc/ghc/-/wikis/view-patterns).
+
+```python
+def sha256(v: str) -> str:
+    import hashlib
+    return hashlib.new('sha256', v.encode('utf8')).hexdigest()
+
+match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
+```
+
+### `At(path, pattern)` (`apm.patterns.*`)
+
+Checks whether the nested object to be matched satisfied pattern at the given path.
+The match fails if the given path can not be resolved.
+
+```python
+record = {
+    "foo": {
+        "bar": {
+            "quux": {
+                "value": "deeply nested"
+            }
+        }
+    }
+}
+
+result := match(record, At("foo.bar.quux", {"value": Capture(..., name="value")}))
+result['value']  # "deeply nested"
+
+# alternate form
+result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="value")}))
 ```
 
 ## Extensible

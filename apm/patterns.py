@@ -71,7 +71,7 @@ class Transformed(Pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match(self._f(value), self._pattern, strict=strict)
+        return ctx.match(self._f(value), self._pattern)
 
 
 class Arguments(Pattern):
@@ -116,3 +116,20 @@ class EachItem(Pattern):
             if not (result := ctx.match(v, self._value_pattern)):
                 return result
         return ctx.matches()
+
+
+class At(Pattern):
+    def __init__(self, path, pattern, /):
+        if isinstance(path, str):
+            self._path = path.split(".")
+        else:
+            self._path = list(path)
+        self._pattern = pattern
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        for k in self._path:
+            try:
+                value = value[k]
+            except KeyError:
+                return ctx.no_match()
+        return ctx.match(value, self._pattern)
