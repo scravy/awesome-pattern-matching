@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 
 class MatchContext:
     def __init__(self):
@@ -164,6 +166,78 @@ class Not(Pattern):
         return ctx.matches()
 
 
+def _match_dict(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
+    try:
+        items = value.items()
+    except (AttributeError, TypeError):
+        return ctx.no_match()
+    matched_keys = set()
+    for key, value in items:
+        if key in pattern:
+            if not (result := ctx.match(value, pattern[key])):
+                return result
+            matched_keys.add(key)
+        else:
+            if strict:
+                return ctx.no_match()
+    for key in pattern:
+        if key not in matched_keys:
+            return ctx.no_match()
+    return ctx.matches()
+
+
+def _match_tuple(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
+    if strict and type(value) != tuple:
+        return ctx.no_match()
+    if not isinstance(value, tuple) or len(pattern) != len(value):
+        return ctx.no_match()
+    for p, v in zip(pattern, value):
+        if not (result := ctx.match(v, p)):
+            return result
+    return ctx.matches()
+
+
+def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
+    if strict and type(value) != list:
+        return ctx.no_match()
+    if pattern and isinstance(pattern[-1], Remaining):
+        return _match_list_remaining(value, pattern[:-1], pattern[-1], ctx=ctx)
+    else:
+        return _match_list_remaining(value, pattern, None, ctx=ctx)
+
+
+def _match_list_remaining(value, pattern, remaining: Optional[Remaining], *, ctx: MatchContext) -> MatchResult:
+    try:
+        it = iter(value)
+    except TypeError:
+        return ctx.no_match()
+    for p in pattern:
+        try:
+            v = next(it)
+        except StopIteration:
+            return ctx.no_match()
+        if not (result := ctx.match(v, p)):
+            return result
+    if not remaining:
+        try:
+            next(it)
+            return ctx.no_match()
+        except StopIteration:
+            pass
+    else:
+        count = 0
+        result_value = []
+        for v in it:
+            count += 1
+            if not (result := ctx.match(v, remaining.pattern)):
+                return result
+            if remaining.name:
+                result_value.append(v)
+        if remaining.name:
+            ctx[remaining.name] = result_value
+        return ctx.match_if(count >= remaining.at_least)
+
+
 def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchResult:
     if pattern == value:
         if strict:
@@ -177,68 +251,13 @@ def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchR
         return pattern.match(value, ctx=ctx, strict=strict)
 
     if isinstance(pattern, dict):
-        try:
-            items = value.items()
-        except (AttributeError, TypeError):
-            return ctx.no_match()
-        matched_keys = set()
-        for key, value in items:
-            if key in pattern:
-                if not (result := ctx.match(value, pattern[key])):
-                    return result
-                matched_keys.add(key)
-            else:
-                if strict:
-                    return ctx.no_match()
-        for key in pattern:
-            if key not in matched_keys:
-                return ctx.no_match()
-        return ctx.matches()
+        return _match_dict(value, pattern, ctx=ctx, strict=strict)
 
     if isinstance(pattern, tuple):
-        if not isinstance(value, tuple) or len(pattern) != len(value):
-            return ctx.no_match()
-        for p, v in zip(pattern, value):
-            if not (result := ctx.match(v, p)):
-                return result
-        return ctx.matches()
+        return _match_tuple(value, pattern, ctx=ctx, strict=strict)
 
     if isinstance(pattern, list):
-        if strict and type(value) != list:
-            return ctx.no_match()
-        if pattern and isinstance(pattern[-1], Remaining):
-            remaining: Remaining = pattern[-1]
-            it = iter(value)
-            for p in pattern[:-1]:
-                try:
-                    v = next(it)
-                except StopIteration:
-                    return ctx.no_match()
-                if not (result := ctx.match(v, p)):
-                    return result
-            count = 0
-            result_value = []
-            for v in it:
-                count += 1
-                if not (result := ctx.match(v, remaining.pattern)):
-                    return result
-                if remaining.name:
-                    result_value.append(v)
-            if remaining.name:
-                ctx[remaining.name] = result_value
-            return ctx.match_if(count >= remaining.at_least)
-        count = 0
-        it = iter(value)
-        for p, v in zip(pattern, it):
-            count += 1
-            if not (result := ctx.match(v, p)):
-                return result
-        try:
-            next(it)
-            return ctx.no_match()
-        except StopIteration:
-            pass
-        return ctx.match_if(count == len(pattern))
+        return _match_list(value, pattern, ctx=ctx, strict=strict)
 
     return ctx.no_match()
 
