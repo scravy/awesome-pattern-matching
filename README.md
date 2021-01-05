@@ -1,5 +1,7 @@
 # Awesome Pattern Matching (_apm_) for Python
 
+[![Downloads](https://static.pepy.tech/personalized-badge/awesome-pattern-matching?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads)](https://pepy.tech/project/awesome-pattern-matching)
+
 - Simple
 - Powerful
 - Extensible
