@@ -84,41 +84,14 @@ class Capture(Pattern):
 
     @property
     def pattern(self):
-        if isinstance(self._pattern, Remaining):
-            return self._pattern.pattern
         return self._pattern
 
     @property
     def name(self):
         return self._name
 
-    @property
-    def at_least(self):
-        return self._pattern.at_least
-
-
-class RemainingMeta(type):
-    def __instancecheck__(self, instance):
-        if isinstance(instance, Capture):
-            # noinspection PyProtectedMember
-            if isinstance(instance._pattern, Remaining):
-                return True
-        return issubclass(type(instance), Remaining)
-
-
-class Remaining(metaclass=RemainingMeta):
-    def __init__(self, pattern, /, *, at_least: int = 0):
-        self.pattern = pattern
-        self.at_least = at_least
-        self.name = ""
-
-    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match(value, self.pattern, strict=strict)
-
 
 class Some:
-    """EXPERIMENTAL"""
-
     def __init__(self, pattern, /, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
@@ -147,6 +120,10 @@ class Some:
         if self.at_least:
             return count >= self.at_least
         return True
+
+
+class Remaining(Some):
+    pass
 
 
 class Strict(Pattern):
@@ -234,13 +211,6 @@ def _match_tuple(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchRes
 def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
     if strict and type(value) != list:
         return ctx.no_match()
-    if pattern and isinstance(pattern[-1], Remaining):
-        return _match_list_remaining(value, pattern[:-1], pattern[-1], ctx=ctx)
-    else:
-        return _match_list_remaining(value, pattern, None, ctx=ctx)
-
-
-def _match_list_remaining(value, pattern, remaining: Optional[Remaining], *, ctx: MatchContext) -> MatchResult:
     try:
         it = iter(value)
     except TypeError:
@@ -287,24 +257,11 @@ def _match_list_remaining(value, pattern, remaining: Optional[Remaining], *, ctx
             return ctx.no_match()
         if not (result := ctx.match(v, p)):
             return result
-    if not remaining:
-        try:
-            next(it)
-            return ctx.no_match()
-        except StopIteration:
-            return ctx.matches()
-    else:
-        count = 0
-        result_value = []
-        for v in it:
-            count += 1
-            if not (result := ctx.match(v, remaining.pattern)):
-                return result
-            if remaining.name:
-                result_value.append(v)
-        if remaining.name:
-            ctx[remaining.name] = result_value
-        return ctx.match_if(count >= remaining.at_least)
+    try:
+        next(it)
+        return ctx.no_match()
+    except StopIteration:
+        return ctx.match_if(not outstanding)
 
 
 def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchResult:
