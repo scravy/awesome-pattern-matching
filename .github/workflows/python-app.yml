@@ -38,4 +38,4 @@ jobs:
         pylint --disable=C,R,W apm
     - name: Run tests
       run: |
-        python3 -m unittest -v
+        python -m unittest -v
