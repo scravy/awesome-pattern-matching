@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import chain
 from typing import Optional
 
 
@@ -71,9 +72,9 @@ class Pattern:
 
 
 class Capture(Pattern):
-    def __init__(self, pattern, /, *, name: str):
+    def __init__(self, pattern, /, *, name):
         self._pattern = pattern
-        self._name: str = name
+        self._name = name
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         if result := ctx.match(value, self._pattern):
@@ -113,6 +114,39 @@ class Remaining(metaclass=RemainingMeta):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match(value, self.pattern, strict=strict)
+
+
+class Some:
+    """EXPERIMENTAL"""
+
+    def __init__(self, pattern, /, *,
+                 at_least: Optional[int] = None,
+                 at_most: Optional[int] = None,
+                 exactly: Optional[int] = None):
+
+        if at_most and at_least and at_most < at_least:
+            raise ValueError(f"conflicting spec: at_most={at_most} < at_least={at_least}")
+        if exactly and at_most:
+            raise ValueError(f"conflicting spec: exactly and at_most set at the same_time")
+        if exactly and at_least:
+            raise ValueError(f"conflicting spec: exactly and at_least set at the same_time")
+        if exactly:
+            at_least = exactly
+            at_most = exactly
+
+        self.pattern = pattern
+        self.at_least: Optional[int] = at_least
+        self.at_most: Optional[int] = at_most
+
+    def count_ok_wrt_at_most(self, count):
+        if self.at_most:
+            return count <= self.at_most
+        return True
+
+    def count_ok_wrt_at_least(self, count):
+        if self.at_least:
+            return count >= self.at_least
+        return True
 
 
 class Strict(Pattern):
@@ -211,9 +245,44 @@ def _match_list_remaining(value, pattern, remaining: Optional[Remaining], *, ctx
         it = iter(value)
     except TypeError:
         return ctx.no_match()
-    for p in pattern:
+    outstanding = False
+    for p, pn in zip(pattern, chain(pattern[1:], [Not(...)])):
+        name = None
+        if isinstance(p, Capture) and isinstance(p.pattern, Some):
+            name = p.name
+            p = p.pattern
+        if isinstance(p, Some):
+            count = 0
+            result_value = []
+            while p.count_ok_wrt_at_most(count + 1):
+                try:
+                    if outstanding:
+                        outstanding = False
+                    else:
+                        v = next(it)
+                except StopIteration:
+                    break
+                # noinspection PyUnboundLocalVariable
+                if ctx.match(v, pn):
+                    outstanding = True
+                    break
+                # noinspection PyUnboundLocalVariable
+                if not ctx.match(v, p.pattern):
+                    outstanding = True
+                    break
+                if name:
+                    result_value.append(v)
+                count += 1
+            if not p.count_ok_wrt_at_least(count):
+                return ctx.no_match()
+            if name:
+                ctx[name] = result_value
+            continue
         try:
-            v = next(it)
+            if outstanding:
+                outstanding = False
+            else:
+                v = next(it)
         except StopIteration:
             return ctx.no_match()
         if not (result := ctx.match(v, p)):
@@ -223,7 +292,7 @@ def _match_list_remaining(value, pattern, remaining: Optional[Remaining], *, ctx
             next(it)
             return ctx.no_match()
         except StopIteration:
-            pass
+            return ctx.matches()
     else:
         count = 0
         result_value = []

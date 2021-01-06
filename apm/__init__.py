@@ -8,6 +8,7 @@ from .core import \
     OneOf, \
     Pattern, \
     Remaining, \
+    Some, \
     Strict, \
     match
 
