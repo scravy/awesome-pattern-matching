@@ -35,7 +35,8 @@ jobs:
     - name: Lint with pylint
       run: |
         pip install pylint
-        pylint --disable=C,R,W apm
+        # E1136 happens spuriously on Python 3.9 and pylint - https://github.com/PyCQA/pylint/issues/3882
+        pylint --disable=C,R,W,E1136 apm
     - name: Run tests
       run: |
         python -m unittest -v
