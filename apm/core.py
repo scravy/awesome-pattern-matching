@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from itertools import chain
 from typing import Optional
 
@@ -215,53 +216,53 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
         it = iter(value)
     except TypeError:
         return ctx.no_match()
-    outstanding = False
-    for p, pn in zip(pattern, chain(pattern[1:], [Not(...)])):
+    item_queued = False
+    for current_pattern, next_pattern in zip(pattern, chain(pattern[1:], [Not(...)])):
         name = None
-        if isinstance(p, Capture) and isinstance(p.pattern, Some):
-            name = p.name
-            p = p.pattern
-        if isinstance(p, Some):
+        if isinstance(current_pattern, Capture) and isinstance(current_pattern.pattern, Some):
+            name = current_pattern.name
+            current_pattern = current_pattern.pattern
+        if isinstance(current_pattern, Some):
             count = 0
             result_value = []
-            while p.count_ok_wrt_at_most(count + 1):
+            while current_pattern.count_ok_wrt_at_most(count + 1):
                 try:
-                    if outstanding:
-                        outstanding = False
+                    if item_queued:
+                        item_queued = False
                     else:
-                        v = next(it)
+                        item = next(it)
                 except StopIteration:
                     break
                 # noinspection PyUnboundLocalVariable
-                if ctx.match(v, pn):
-                    outstanding = True
+                if ctx.match(item, next_pattern):
+                    item_queued = True
                     break
                 # noinspection PyUnboundLocalVariable
-                if not ctx.match(v, p.pattern):
-                    outstanding = True
+                if not ctx.match(item, current_pattern.pattern):
+                    item_queued = True
                     break
                 if name:
-                    result_value.append(v)
+                    result_value.append(item)
                 count += 1
-            if not p.count_ok_wrt_at_least(count):
+            if not current_pattern.count_ok_wrt_at_least(count):
                 return ctx.no_match()
             if name:
                 ctx[name] = result_value
             continue
         try:
-            if outstanding:
-                outstanding = False
+            if item_queued:
+                item_queued = False
             else:
-                v = next(it)
+                item = next(it)
         except StopIteration:
             return ctx.no_match()
-        if not (result := ctx.match(v, p)):
+        if not (result := ctx.match(item, current_pattern)):
             return result
     try:
         next(it)
         return ctx.no_match()
     except StopIteration:
-        return ctx.match_if(not outstanding)
+        return ctx.match_if(not item_queued)
 
 
 def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchResult:
