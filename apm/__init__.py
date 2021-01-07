@@ -26,6 +26,8 @@ from .patterns import \
     Each, \
     EachItem, \
     InstanceOf, \
+    IsNumber, \
+    IsString, \
     Length, \
     Regex, \
     Returns, \
@@ -66,6 +68,8 @@ __all__ = [
     'Each',
     'EachItem',
     'InstanceOf',
+    'IsNumber',
+    'IsString',
     'Length',
     'Regex',
     'Returns',

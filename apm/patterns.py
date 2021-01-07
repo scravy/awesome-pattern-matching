@@ -1,3 +1,4 @@
+import decimal
 import operator as ops
 import re
 from typing import Callable, Optional
@@ -150,3 +151,7 @@ class At(Pattern):
             except KeyError:
                 return ctx.no_match()
         return ctx.match(value, self._pattern)
+
+
+IsNumber = (InstanceOf(int) & ~InstanceOf(bool)) | InstanceOf(float) | InstanceOf(decimal.Decimal)
+IsString = InstanceOf(str)

@@ -265,3 +265,8 @@ class BasicUseCases(unittest.TestCase):
         self.assertEqual("somehost", result.host)
         self.assertEqual("1", result.foo)
         self.assertEqual("2", result.bar)
+
+    def test_is_type(self):
+        self.assertTrue(match(1, IsNumber))
+        self.assertTrue(match(1.0, IsNumber))
+        self.assertFalse(match(True, IsNumber))
