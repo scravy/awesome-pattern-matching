@@ -33,3 +33,123 @@ class CaptureTest(unittest.TestCase):
             pattern=Each({"first-name": Capture(..., name="first_name")})
         ))
         self.assertEqual("John", result['first_name'])
+
+    def test_syntactic_sugar(self):
+        self.assertTrue(result := match(sample_k8s_response, {
+            "containers": Each({
+                "image": Value(...) >> 'image',
+                "name": Value(...) >> 'name',
+                "ports": Each({
+                    "containerPort": Value(...) >> 'port'
+                }),
+            })
+        }))
+        self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
+        self.assertEqual('metrics-server', result['name'])
+        self.assertEqual(4443, result['port'])
+
+
+sample_k8s_response = {
+    "containers": [
+        {
+            "args": [
+                "--cert-dir=/tmp",
+                "--secure-port=4443",
+                "--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+                "--kubelet-use-node-status-port"
+            ],
+            "image": "k8s.gcr.io/metrics-server/metrics-server:v0.4.1",
+            "imagePullPolicy": "IfNotPresent",
+            "livenessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                    "path": "/livez",
+                    "port": "https",
+                    "scheme": "HTTPS"
+                },
+                "periodSeconds": 10,
+                "successThreshold": 1,
+                "timeoutSeconds": 1
+            },
+            "name": "metrics-server",
+            "ports": [
+                {
+                    "containerPort": 4443,
+                    "name": "https",
+                    "protocol": "TCP"
+                }
+            ],
+            "readinessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                    "path": "/readyz",
+                    "port": "https",
+                    "scheme": "HTTPS"
+                },
+                "periodSeconds": 10,
+                "successThreshold": 1,
+                "timeoutSeconds": 1
+            },
+            "resources": {},
+            "securityContext": {
+                "readOnlyRootFilesystem": True,
+                "runAsNonRoot": True,
+                "runAsUser": 1000
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+                {
+                    "mountPath": "/tmp",
+                    "name": "tmp-dir"
+                },
+                {
+                    "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                    "name": "metrics-server-token-2j86f",
+                    "readOnly": True
+                }
+            ]
+        }
+    ],
+    "dnsPolicy": "ClusterFirst",
+    "enableServiceLinks": True,
+    "nodeName": "ip-10-2-169-118.ec2.internal",
+    "nodeSelector": {
+        "kubernetes.io/os": "linux"
+    },
+    "priority": 2000000000,
+    "priorityClassName": "system-cluster-critical",
+    "restartPolicy": "Always",
+    "schedulerName": "default-scheduler",
+    "securityContext": {},
+    "serviceAccount": "metrics-server",
+    "serviceAccountName": "metrics-server",
+    "terminationGracePeriodSeconds": 30,
+    "tolerations": [
+        {
+            "effect": "NoExecute",
+            "key": "node.kubernetes.io/not-ready",
+            "operator": "Exists",
+            "tolerationSeconds": 300
+        },
+        {
+            "effect": "NoExecute",
+            "key": "node.kubernetes.io/unreachable",
+            "operator": "Exists",
+            "tolerationSeconds": 300
+        }
+    ],
+    "volumes": [
+        {
+            "emptyDir": {},
+            "name": "tmp-dir"
+        },
+        {
+            "name": "metrics-server-token-2j86f",
+            "secret": {
+                "defaultMode": 420,
+                "secretName": "metrics-server-token-2j86f"
+            }
+        }
+    ]
+}

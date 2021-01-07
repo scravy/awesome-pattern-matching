@@ -86,7 +86,12 @@ class MatchResult:
         return self._context.groups.items()
 
 
-class Pattern:
+class Capturable:
+    def __rshift__(self, other):
+        return Capture(self, name=other)
+
+
+class Pattern(Capturable):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         raise NotImplementedError
 
@@ -164,7 +169,7 @@ class Capture(Pattern):
         return self._name
 
 
-class Some:
+class Some(Capturable):
     def __init__(self, pattern, /, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
@@ -212,6 +217,8 @@ class Value(Pattern):
         self._value = value
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        if self._value is Ellipsis:
+            return ctx.matches()
         if strict:
             if type(self._value) != type(value):
                 return ctx.no_match()

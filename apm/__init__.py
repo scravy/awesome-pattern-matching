@@ -13,7 +13,8 @@ from .core import \
     Some, \
     Strict, \
     String, \
-    StringPattern
+    StringPattern, \
+    Value
 from .match import match
 from .patterns import \
     Arguments, \
