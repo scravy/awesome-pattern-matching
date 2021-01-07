@@ -5,6 +5,7 @@
 - Simple
 - Powerful
 - Extensible
+- Composable
 - Python 3.8+
 - Typed (IDE friendly)
 
