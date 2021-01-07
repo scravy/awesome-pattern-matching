@@ -352,28 +352,3 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
         return ctx.no_match()
     except StopIteration:
         return ctx.match_if(not item_queued)
-
-
-class AttributesAdapter:
-    def __init__(self, base):
-        self._base = base
-
-    def __bool__(self):
-        return bool(self._base)
-
-    def __getattr__(self, item):
-        try:
-            return self._base[item]
-        except KeyError as err:
-            raise AttributeError(*err.args)
-
-
-def match(value, pattern, *, multimatch=True, strict=False, argresult=False) -> MatchResult:
-    ctx = MatchContext(
-        multimatch=multimatch,
-        strict=strict,
-    )
-    result = ctx.match(value, pattern, strict=strict)
-    if argresult:
-        result = AttributesAdapter(result)
-    return result

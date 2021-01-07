@@ -20,3 +20,13 @@ def get_return_type(obj) -> Optional[Type]:
     if 'return' in type_hints:
         return type_hints['return']
     return None
+
+
+def invoke(func, args):
+    code: CodeType = func.__code__
+    argcount = code.co_argcount
+    actual_args = []
+    for _, name in zip(range(0, argcount), code.co_varnames):
+        arg = args[name] if name in args else None
+        actual_args.append(arg)
+    return func(*actual_args)

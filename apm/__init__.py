@@ -1,3 +1,5 @@
+from .__pkginfo__ import __version__
+from .case_of import case
 from .core import \
     AllOf, \
     Capture, \
@@ -11,9 +13,8 @@ from .core import \
     Some, \
     Strict, \
     String, \
-    StringPattern, \
-    match
-
+    StringPattern
+from .match import match
 from .patterns import \
     Arguments, \
     At, \
@@ -28,5 +29,4 @@ from .patterns import \
     Returns, \
     Transformed, \
     Truish
-
-from .__pkginfo__ import __version__
+from .try_match import Case, Default
