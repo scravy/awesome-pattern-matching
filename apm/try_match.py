@@ -14,10 +14,10 @@ class TryMatch(Default):
         self.result = None
 
     def __getitem__(self, item):
-        return self.result[item]
+        return self.result[item]  # pylint: disable=unsubscriptable-object
 
     def __contains__(self, item):
-        return item in self.result
+        return item in self.result  # pylint: disable=unsupported-membership-test
 
     def __iter__(self):
         return iter(self.result)
