@@ -34,13 +34,27 @@ class CaptureTest(unittest.TestCase):
         ))
         self.assertEqual("John", result['first_name'])
 
-    def test_syntactic_sugar(self):
+    def test_syntactic_sugar_rshift_operator(self):
         self.assertTrue(result := match(sample_k8s_response, {
             "containers": Each({
                 "image": Value(...) >> 'image',
                 "name": Value(...) >> 'name',
                 "ports": Each({
                     "containerPort": Value(...) >> 'port'
+                }),
+            })
+        }))
+        self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
+        self.assertEqual('metrics-server', result['name'])
+        self.assertEqual(4443, result['port'])
+
+    def test_syntactic_sugar_rmatmul_operator(self):
+        self.assertTrue(result := match(sample_k8s_response, {
+            "containers": Each({
+                "image": 'image' @ Value(...),
+                "name": 'name' @ Value(...),
+                "ports": Each({
+                    "containerPort": 'port' @ Value(...)
                 }),
             })
         }))

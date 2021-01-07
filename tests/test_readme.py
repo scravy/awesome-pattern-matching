@@ -5,6 +5,48 @@ from apm import *
 
 class ReadmeExamples(unittest.TestCase):
 
+    def test_first_example(self):
+        if result := match([1, 2, 3, 4, 5], [1, _ >> "2nd", _ >> "3rd", Remaining(...) >> "tail"]):
+            self.assertEqual(2, result['2nd'])
+            self.assertEqual(3, result['3rd'])
+            self.assertEqual([4, 5], result['tail'])
+
+    def test_styles(self):
+        value = 7
+
+        invocations = 0
+
+        def check(v):
+            nonlocal invocations
+            self.assertEqual("It's between 1 and 10", v)
+            invocations += 1
+
+        # The simple style
+        if match(value, Between(1, 10)):
+            check("It's between 1 and 10")
+        elif match(value, Between(11, 20)):
+            check("It's between 11 and 20")
+        else:
+            check("It's not between 1 and 20")
+
+        # The expression style
+        case(value) \
+            .of(Between(1, 10), lambda: check("It's between 1 and 10")) \
+            .of(Between(11, 20), lambda: check("It's between 11 and 20")) \
+            .otherwise(lambda: check("It's not between 1 and 20"))
+
+        # The statement style
+        try:
+            match(value)
+        except Case(Between(1, 10)):
+            check("It's between 1 and 10")
+        except Case(Between(11, 20)):
+            check("It's between 1 and 10")
+        except Default:
+            check("It's not between 1 and 20")
+
+        self.assertEqual(3, invocations)
+
     def test_record_example(self):
         record = {
             "ID": 9340,

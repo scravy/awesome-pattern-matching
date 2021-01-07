@@ -17,7 +17,7 @@ class CaseExpr:
         else:
             return self
 
-    def default(self, then):
+    def otherwise(self, then):
         if callable(then):
             return invoke(then, {})
         else:
@@ -29,7 +29,7 @@ class CaseExprEnd(CaseExpr):
     def of(self, pattern, then) -> CaseExpr:
         return self
 
-    def default(self, then):
+    def otherwise(self, then):
         return self._value
 
 

@@ -90,6 +90,9 @@ class Capturable:
     def __rshift__(self, other):
         return Capture(self, name=other)
 
+    def __rmatmul__(self, other):
+        return Capture(self, name=other)
+
 
 class Pattern(Capturable):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:

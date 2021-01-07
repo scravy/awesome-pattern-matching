@@ -16,29 +16,66 @@ However, I wanted something which works well and works now, so here we are.
 _`apm`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
 variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack,
 but which also makes pattern matching useful in the first place - the capability to easily extract data).
-Capturing pieces of the input is very similar to the way capturing groups work in regular expressions,
-just a bit more noisy. Here is an example:
+Here is an example:
 
 ```python
-match(value, ["first", Capture(..., name="2nd"), Capture(..., name="3rd")])
-```
+from apm import *
 
-The above example matches a list of exactly three elements, the first element being exactly `"first"`, the seconds
-and third being anything (`...` – the ellipsis is actual syntax and performs a wildcard match).
-It captures the seconds and third elements as `2nd` and `3rd` respectively. `match` returns a `MatchResult` which
-can be used to access `2nd` and `3rd`:
-
-```python
-if result := match(value, ["first", Capture(..., name="2nd"), Capture(..., name="3rd")]):
-    result['2nd']  # first element
-    result['3rd']  # second element
+if result := match([1, 2, 3, 4, 5], [1, _ >> "2nd", _ >> "3rd", Remaining(...) >> "tail"]):
+    print(result['2nd'])  # 2
+    print(result['3rd'])  # 3
+    print(result['tail']) # [4, 5]
 ```
 
 Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`.
 Since patterns are objects, they can be stored in variables and be reused.
 
 ```python
-positive_number = InstanceOf(int) & Check(lambda x: x >= 0)
+positive_integer = InstanceOf(int) & Check(lambda x: x >= 0)
+```
+
+Some fancy matching patterns are available out of the box:
+
+```python
+from apm import *
+
+def f(x: int, y: float) -> int:
+    pass
+
+if match(f, Arguments(int, float) & Returns(int)):
+    print("Function satisfies required signature")
+```
+
+Different matching statement styles can be used:
+
+```python
+from apm import *
+
+value = 7
+
+# The simple style
+if match(value, Between(1, 10)):
+    print("It's between 1 and 10")
+elif match(value, Between(11, 20)):
+    print("It's between 11 and 20")
+else:
+    print("It's not between 1 and 20")
+
+# The expression style
+case(value) \
+    .of(Between(1, 10), lambda: print("It's between 1 and 10")) \
+    .of(Between(11, 20), lambda: print("It's between 11 and 20")) \
+    .otherwise(lambda: print("It's not between 1 and 20"))
+
+# The statement style
+try:
+    match(value)
+except Case(Between(1, 10)):
+    print("It's between 1 and 10")
+except Case(Between(11, 20)):
+    print("It's between 1 and 10")
+except Default:
+    print("It's not between 1 and 20")
 ```
 
 ## Installation
