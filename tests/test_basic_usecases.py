@@ -224,3 +224,44 @@ class BasicUseCases(unittest.TestCase):
         self.assertEqual("deeply nested", result['value'])
 
         self.assertFalse(match(record, At("foo.bar.quux.baz", InstanceOf(int))))
+
+    def test_string(self):
+        path = "https://somehost/foo=1/bar=2/"
+
+        self.assertTrue(result := match(path, String(
+            Capture(OneOf("https", "http"), name="protocol"),
+            "://",
+            Capture(Regex("[a-zA-Z_-]+"), name="host"),
+            Regex("/+"),
+            "foo=",
+            Capture(Regex("[^=/]+"), name="foo"),
+            "/",
+            "bar=",
+            Capture(Regex("[^=/]+"), name="bar"),
+            Regex("/*"),
+        )))
+        self.assertEqual("https", result['protocol'])
+        self.assertEqual("somehost", result['host'])
+        self.assertEqual("1", result['foo'])
+        self.assertEqual("2", result['bar'])
+
+    # noinspection PyUnresolvedReferences
+    def test_string_argresult(self):
+        path = "https://somehost/foo=1/bar=2/"
+
+        self.assertTrue(result := match(path, String(
+            Capture(OneOf("https", "http"), name="protocol"),
+            "://",
+            Capture(Regex("[a-zA-Z_-]+"), name="host"),
+            Regex("/+"),
+            "foo=",
+            Capture(Regex("[^=/]+"), name="foo"),
+            "/",
+            "bar=",
+            Capture(Regex("[^=/]+"), name="bar"),
+            Regex("/*"),
+        ), argresult=True))
+        self.assertEqual("https", result.protocol)
+        self.assertEqual("somehost", result.host)
+        self.assertEqual("1", result.foo)
+        self.assertEqual("2", result.bar)

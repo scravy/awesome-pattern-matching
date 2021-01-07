@@ -10,6 +10,8 @@ from .core import \
     Remaining, \
     Some, \
     Strict, \
+    String, \
+    StringPattern, \
     match
 
 from .patterns import \

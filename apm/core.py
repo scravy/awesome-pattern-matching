@@ -1,25 +1,56 @@
 from __future__ import annotations
 
-import re
 from itertools import chain
 from typing import Optional
 
 
 class MatchContext:
-    def __init__(self):
+    def __init__(self, *, multimatch: bool, strict: bool):
         self.groups = {}
+        self.multimatch = multimatch
+        self.strict = strict
 
     def __setitem__(self, key, value):
-        self.groups[key] = value
+        if self.multimatch:
+            if key not in self.groups:
+                self.groups[key] = []
+            self.groups[key].append(value)
+        else:
+            self.groups[key] = value
 
     def __getitem__(self, item):
-        return self.groups[item]
+        values = self.groups[item]
+        if self.multimatch and len(values) == 1:
+            return values[0]
+        return values
 
     def __contains__(self, item):
         return item in self.groups
 
     def match(self, value, pattern, strict=False) -> MatchResult:
-        return _match(value, pattern, ctx=self, strict=strict)
+        strict = strict or self.strict
+
+        if pattern == value:
+            if strict:
+                return self.match_if(type(pattern) == type(value))
+            return self.matches()
+
+        if pattern is Ellipsis:
+            return self.matches()
+
+        if isinstance(pattern, Pattern):
+            return pattern.match(value, ctx=self, strict=strict)
+
+        if isinstance(pattern, dict):
+            return _match_dict(value, pattern, ctx=self, strict=strict)
+
+        if isinstance(pattern, tuple):
+            return _match_tuple(value, pattern, ctx=self, strict=strict)
+
+        if isinstance(pattern, list):
+            return _match_list(value, pattern, ctx=self, strict=strict)
+
+        return self.no_match()
 
     def matches(self) -> MatchResult:
         return MatchResult(matches=True, context=self)
@@ -57,7 +88,7 @@ class MatchResult:
 
 class Pattern:
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __and__(self, other):
         return AllOf(self, other)
@@ -70,6 +101,47 @@ class Pattern:
 
     def __invert__(self):
         return Not(self)
+
+
+class StringPattern:
+    """Experimental"""
+
+    def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
+        raise NotImplementedError
+
+
+class String(Pattern):
+    """Experimental"""
+
+    def __init__(self, *patterns):
+        self._patterns = patterns
+
+    @staticmethod
+    def match_pattern(*, remaining, pattern, ctx: MatchContext) -> Optional[str]:
+        name = ""
+        if isinstance(pattern, Capture):
+            name = pattern.name
+            pattern = pattern.pattern
+        if isinstance(pattern, str):
+            if remaining[:len(pattern)] == pattern:
+                if name:
+                    ctx[name] = pattern
+                return pattern
+        elif isinstance(pattern, StringPattern):
+            if (result := pattern.string_match(remaining, ctx=ctx)) is not None:
+                if name:
+                    ctx[name] = result
+                return result
+        return None
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        remaining = value
+        for p in self._patterns:
+            if (matched := self.match_pattern(remaining=remaining, pattern=p, ctx=ctx)) is not None:
+                remaining = remaining[len(matched):]
+            else:
+                return ctx.no_match()
+        return ctx.match_if(not remaining)
 
 
 class Capture(Pattern):
@@ -135,7 +207,18 @@ class Strict(Pattern):
         return ctx.match(value, self._pattern, strict=True)
 
 
-class OneOf(Pattern):
+class Value(Pattern):
+    def __init__(self, value, /):
+        self._value = value
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        if strict:
+            if type(self._value) != type(value):
+                return ctx.no_match()
+        return ctx.match_if(self._value == value)
+
+
+class OneOf(Pattern, StringPattern):
     def __init__(self, *patterns):
         self._patterns = patterns
 
@@ -144,6 +227,12 @@ class OneOf(Pattern):
             if result := ctx.match(value, pattern):
                 return result
         return ctx.no_match()
+
+    def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
+        for p in self._patterns:
+            if (result := String.match_pattern(remaining=remaining, pattern=p, ctx=ctx)) is not None:
+                return result
+        return None
 
 
 class AllOf(Pattern):
@@ -265,29 +354,26 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
         return ctx.match_if(not item_queued)
 
 
-def _match(value, pattern, *, ctx: MatchContext, strict: bool = False) -> MatchResult:
-    if pattern == value:
-        if strict:
-            return ctx.match_if(type(pattern) == type(value))
-        return ctx.matches()
+class AttributesAdapter:
+    def __init__(self, base):
+        self._base = base
 
-    if pattern is Ellipsis:
-        return ctx.matches()
+    def __bool__(self):
+        return bool(self._base)
 
-    if isinstance(pattern, Pattern):
-        return pattern.match(value, ctx=ctx, strict=strict)
-
-    if isinstance(pattern, dict):
-        return _match_dict(value, pattern, ctx=ctx, strict=strict)
-
-    if isinstance(pattern, tuple):
-        return _match_tuple(value, pattern, ctx=ctx, strict=strict)
-
-    if isinstance(pattern, list):
-        return _match_list(value, pattern, ctx=ctx, strict=strict)
-
-    return ctx.no_match()
+    def __getattr__(self, item):
+        try:
+            return self._base[item]
+        except KeyError as err:
+            raise AttributeError(*err.args)
 
 
-def match(value, pattern) -> MatchResult:
-    return _match(value, pattern, ctx=MatchContext())
+def match(value, pattern, *, multimatch=True, strict=False, argresult=False) -> MatchResult:
+    ctx = MatchContext(
+        multimatch=multimatch,
+        strict=strict,
+    )
+    result = ctx.match(value, pattern, strict=strict)
+    if argresult:
+        result = AttributesAdapter(result)
+    return result

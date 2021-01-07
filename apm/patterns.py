@@ -1,9 +1,9 @@
 import operator as ops
 import re
-from typing import Callable
+from typing import Callable, Optional
 
-from .core import Pattern, MatchContext, MatchResult
 from ._util import get_arg_types, get_return_type
+from .core import Pattern, MatchContext, MatchResult, StringPattern
 
 
 class Check(Pattern):
@@ -14,15 +14,24 @@ class Check(Pattern):
         return ctx.match_if(self._condition(value))
 
 
-class Regex(Pattern):
+class Regex(Pattern, StringPattern):
     def __init__(self, regex, /):
-        self._regex = re.compile(regex)
+        self._regex: re.Pattern = re.compile(regex)
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         if self._regex.fullmatch(value):
             return ctx.matches()
         else:
             return ctx.no_match()
+
+    def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
+        if result := self._regex.match(remaining):
+            return result.group(0)
+        return None
+
+    @property
+    def regex(self) -> re.Pattern:
+        return self._regex
 
 
 class InstanceOf(Pattern):
