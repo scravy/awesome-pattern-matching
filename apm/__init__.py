@@ -14,7 +14,8 @@ from .core import \
     Strict, \
     String, \
     StringPattern, \
-    Value
+    Value, \
+    _
 from .match import match
 from .patterns import \
     Arguments, \
@@ -31,3 +32,43 @@ from .patterns import \
     Transformed, \
     Truish
 from .try_match import Case, Default
+
+__all__ = [
+    'AllOf',
+    'Capture',
+    'Either',
+    'MatchContext',
+    'MatchResult',
+    'Not',
+    'OneOf',
+    'Pattern',
+    'Remaining',
+    'Some',
+    'Strict',
+    'String',
+    'StringPattern',
+    'Value',
+
+    '_',
+
+    'case',
+
+    'match',
+
+    'Case',
+    'Default',
+
+    'Arguments',
+    'At',
+    'Between',
+    'Check',
+    'Contains',
+    'Each',
+    'EachItem',
+    'InstanceOf',
+    'Length',
+    'Regex',
+    'Returns',
+    'Transformed',
+    'Truish',
+]

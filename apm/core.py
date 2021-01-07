@@ -359,3 +359,6 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
         return ctx.no_match()
     except StopIteration:
         return ctx.match_if(not item_queued)
+
+
+_ = Value(...)

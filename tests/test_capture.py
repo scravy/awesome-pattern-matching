@@ -48,6 +48,20 @@ class CaptureTest(unittest.TestCase):
         self.assertEqual('metrics-server', result['name'])
         self.assertEqual(4443, result['port'])
 
+    def test_syntactic_sugar_underscore(self):
+        self.assertTrue(result := match(sample_k8s_response, {
+            "containers": Each({
+                "image": _ >> 'image',
+                "name": _ >> 'name',
+                "ports": Each({
+                    "containerPort": Value(...) >> 'port'
+                }),
+            })
+        }))
+        self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
+        self.assertEqual('metrics-server', result['name'])
+        self.assertEqual(4443, result['port'])
+
 
 sample_k8s_response = {
     "containers": [
