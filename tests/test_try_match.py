@@ -20,3 +20,17 @@ class TryMatchTest(unittest.TestCase):
             result = 'lower'
         finally:
             self.assertEqual(result, 'lower')
+
+    def test_try_match_default(self):
+        result = None
+        try:
+            match({
+                "id": "h23ksad8",
+                "name": "ObjectName"
+            })
+        except Case({"id": Regex("[A-Z0-9]+")}):
+            result = 'upper'
+        except Default:
+            result = 'unknown'
+        finally:
+            self.assertEqual(result, 'unknown')
