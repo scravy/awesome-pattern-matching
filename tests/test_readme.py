@@ -6,7 +6,7 @@ from apm import *
 class ReadmeExamples(unittest.TestCase):
 
     def test_first_example(self):
-        if result := match([1, 2, 3, 4, 5], [1, _ >> "2nd", _ >> "3rd", Remaining(...) >> "tail"]):
+        if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
             self.assertEqual(2, result['2nd'])
             self.assertEqual(3, result['3rd'])
             self.assertEqual([4, 5], result['tail'])

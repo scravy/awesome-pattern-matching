@@ -21,10 +21,13 @@ Here is an example:
 ```python
 from apm import *
 
-if result := match([1, 2, 3, 4, 5], [1, _ >> "2nd", _ >> "3rd", Remaining(...) >> "tail"]):
+if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
     print(result['2nd'])  # 2
     print(result['3rd'])  # 3
     print(result['tail']) # [4, 5]
+
+# If you find it more readable, '>>' can be used instead of '@' to capture a variable
+match([1, 2, 3, 4, 5], [1, _ >> '2nd', _ >> '3rd', Remaining(...) >> 'tail'])
 ```
 
 Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`.
@@ -82,21 +85,6 @@ except Default:
 
 ```python
 pip install awesome-pattern-matching
-```
-
-## Usage
-
-```python
-from apm import *
-
-record = {
-    "ID": 9340,
-    "First-Name": "Jane",
-    "Last-Name": "Doe",
-}
-
-if result := match(record, {"First-Name": Capture(Regex("[A-Z][a-z]*"), name="name")}):
-    print(result['name'])
 ```
 
 ## Very slim User Guide
@@ -309,54 +297,4 @@ class Min(Pattern):
 
 match(3, Min(1))  # matches
 match(3, Min(5))  # does not match
-```
-
-## More Examples
-
-Demonstrated below: Junction of Patterns using `&`, `Strict` dictionary matching, `Each`.
-
-```python
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz"
-    }
-]
-
-assertTrue(
-    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
-
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz",
-        "Strict": "Does not allow unknown keys"
-    }
-]
-
-assertFalse(
-    match(records, Each(Strict({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")}))))
-
-records = [
-    {
-        "Foo": 1,
-        "Bar": "Quux"
-    },
-    {
-        "Foo": 2,
-        "Bar": "Baz",
-        "No Problem": "When Not Strict"
-    }
-]
-
-assertTrue(  # Note how this pattern is the same as above but without `Strict`
-    match(records, Each({"Foo": InstanceOf(int), "Bar": InstanceOf(str) & Regex("[A-Z][a-z]+")})))
 ```
