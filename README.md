@@ -94,6 +94,12 @@ def f(n):
     print("It's not between 1 and 20")
 
 f(value)
+
+# pampy style
+match(value,
+      Between( 1, 10), lambda: print("It's between 1 and 10"),
+      Between(11, 20), lambda: print("It's between 11 and 20"),
+      _,               lambda: print("It's not between 1 and 20"))
 ```
 
 ## Installation

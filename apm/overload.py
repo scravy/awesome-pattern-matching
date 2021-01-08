@@ -39,7 +39,6 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
                 continue
             matches = True
             for name, value in bound.arguments.items():
-                # annotation = sig.parameters[name].annotation
                 type_hints = typing.get_type_hints(func)
                 if name not in type_hints:
                     continue

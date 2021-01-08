@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import Optional
+from typing import Optional, List
 
 
 class MatchContext:
     def __init__(self, *, multimatch: bool, strict: bool):
         self.groups = {}
+        self.wildcard_matches = []
         self.multimatch = multimatch
         self.strict = strict
 
@@ -61,6 +62,9 @@ class MatchContext:
     def match_if(self, condition: bool) -> MatchResult:
         return MatchResult(matches=bool(condition), context=self)
 
+    def record(self, value):
+        self.wildcard_matches.append(value)
+
 
 class MatchResult:
     def __init__(self, *, matches: bool, context: MatchContext):
@@ -84,6 +88,9 @@ class MatchResult:
 
     def items(self):
         return self._context.groups.items()
+
+    def wildcard_matches(self) -> List:
+        return self._context.wildcard_matches
 
 
 class Capturable:
@@ -221,6 +228,7 @@ class Value(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         if self._value is Ellipsis:
+            ctx.record(value)
             return ctx.matches()
         if strict:
             if type(self._value) != type(value):
