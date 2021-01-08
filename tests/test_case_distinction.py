@@ -37,7 +37,7 @@ class CaseDistinctionTest(unittest.TestCase):
 
         @case_distinction
         def f(n: Match(Between(11, 20))):
-            check("It's between 1 and 10")
+            check("It's between 11 and 20")
             return 2
 
         @case_distinction

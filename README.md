@@ -76,7 +76,7 @@ try:
 except Case(Between(1, 10)):
     print("It's between 1 and 10")
 except Case(Between(11, 20)):
-    print("It's between 1 and 10")
+    print("It's between 11 and 20")
 except Default:
     print("It's not between 1 and 20")
 
@@ -87,7 +87,7 @@ def f(n: Match(Between(1, 10))):
 
 @case_distinction
 def f(n: Match(Between(11, 20))):
-    print("It's between 1 and 10")
+    print("It's between 11 and 20")
 
 @case_distinction
 def f(n):
