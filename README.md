@@ -8,15 +8,15 @@
 - Composable
 - Python 3.8+
 - Typed (IDE friendly)
+- Offers different styles
 
 There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
-also [there's a PEP on it's way for a match construct](https://www.python.org/dev/peps/pep-0634/).
-However, I wanted something which works well and works now, so here we are.
+also [there's a PEP on it's way for a match construct](https://www.python.org/dev/peps/pep-0634/). However, I wanted
+something which works well and works now, so here we are.
 
 _`apm`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
-variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack,
-but which also makes pattern matching useful in the first place - the capability to easily extract data).
-Here is an example:
+variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack, but which also
+makes pattern matching useful in the first place - the capability to easily extract data). Here is an example:
 
 ```python
 from apm import *
@@ -24,14 +24,14 @@ from apm import *
 if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
     print(result['2nd'])  # 2
     print(result['3rd'])  # 3
-    print(result['tail']) # [4, 5]
+    print(result['tail'])  # [4, 5]
 
 # If you find it more readable, '>>' can be used instead of '@' to capture a variable
 match([1, 2, 3, 4, 5], [1, _ >> '2nd', _ >> '3rd', Remaining(...) >> 'tail'])
 ```
 
-Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`.
-Since patterns are objects, they can be stored in variables and be reused.
+Patterns can be composed using `&`, `|`, and `^`, or via their more explicit counterparts `AllOf`, `OneOf`, and `Either`
+. Since patterns are objects, they can be stored in variables and be reused.
 
 ```python
 positive_integer = InstanceOf(int) & Check(lambda x: x >= 0)
@@ -42,8 +42,10 @@ Some fancy matching patterns are available out of the box:
 ```python
 from apm import *
 
+
 def f(x: int, y: float) -> int:
     pass
+
 
 if match(f, Arguments(int, float) & Returns(int)):
     print("Function satisfies required signature")
@@ -65,9 +67,9 @@ else:
     print("It's not between 1 and 20")
 
 # The expression style
-case(value) \
-    .of(Between(1, 10), lambda: print("It's between 1 and 10")) \
-    .of(Between(11, 20), lambda: print("It's between 11 and 20")) \
+case(value)
+    .of(Between(1, 10), lambda: print("It's between 1 and 10"))
+    .of(Between(11, 20), lambda: print("It's between 11 and 20"))
     .otherwise(lambda: print("It's not between 1 and 20"))
 
 # The statement style
@@ -80,18 +82,22 @@ except Case(Between(11, 20)):
 except Default:
     print("It's not between 1 and 20")
 
+
 # The declarative style
 @case_distinction
 def f(n: Match(Between(1, 10))):
     print("It's between 1 and 10")
 
+
 @case_distinction
 def f(n: Match(Between(11, 20))):
     print("It's between 11 and 20")
 
+
 @case_distinction
 def f(n):
     print("It's not between 1 and 20")
+
 
 f(value)
 ```
@@ -99,7 +105,9 @@ f(value)
 ## Installation
 
 ```python
-pip install awesome-pattern-matching
+pip
+install
+awesome - pattern - matching
 ```
 
 ## Very slim User Guide
@@ -160,6 +168,18 @@ match(ls, [1, Remaining(..., at_least=2)])
 The above example also showcases how `Remaining` can be made to match
 `at_least` _n_ number of items (`Each` also has an `at_least` keyword argument).
 
+### Match anything using `...` or `_`
+
+A wildcard pattern can be expressed using `...`, the ellipsis object. An alternate, to some people more familiar syntax,
+is `_`. There is actually a difference between `...` and `_`. The ellipsis (`...`) is a native python type, whereas `_`
+is defined as `Value(...)`. That is: `_` is an instance of `Pattern`, whereas `...` is not.
+
+```python
+# These are equivalent
+match([1, 2, 3, 4], [1, _, 3, _])
+match([1, 2, 3, 4], [1, ..., 3, ...])
+```
+
 ### `Capture(pattern, name=<str>)`
 
 Captures a piece of the thing being matched by name.
@@ -172,8 +192,8 @@ if result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name
 ### `Strict(pattern)`
 
 Performs a strict pattern match. A strict pattern match also compares the type of verbatim values. That is, while
-_`apm`_ would match `3` with `3.0` it would not do so when using `Strict`. Also _`apm`_ performs partial matches
-of dictionaries (that is: it ignores unknown keys). It will perform an exact match for dictionaries using `Strict`.
+_`apm`_ would match `3` with `3.0` it would not do so when using `Strict`. Also _`apm`_ performs partial matches of
+dictionaries (that is: it ignores unknown keys). It will perform an exact match for dictionaries using `Strict`.
 
 ```python
 # The following will match
@@ -196,6 +216,24 @@ match("quux", OneOf("bar", "baz", "quux"))
 
 ```python
 match(3, OneOf(InstanceOf(int), None))
+```
+
+Patterns can also be joined using `|` to form a `OneOf` pattern:
+
+```python
+match(3, InstanceOf(int) | InstanceOf(float))
+```
+
+The above example is rather contrived, as `InstanceOf` already accepts multiple types natively:
+
+```python
+match(3, InstanceOf(int, float))
+```
+
+Since bare values do not inherit from `Pattern` they can be wrapped in `Value`:
+
+```python
+match("quux", Value("foo") | Value("quux"))
 ```
 
 ### `AllOf(pattern1, pattern2, ..)`
@@ -241,12 +279,12 @@ match(1, InstanceOf(int, flaot))
 
 ### `Arguments(type1 [, type2 [, ..]])`
 
-Matches a callable if it's type annotations correspond to the given types.
-Very useful for implementing rich APIs.
+Matches a callable if it's type annotations correspond to the given types. Very useful for implementing rich APIs.
 
 ```python
 def f(x: int, y: float, z):
     ...
+
 
 match(f, Arguments(int, float, None))
 ```
@@ -259,26 +297,29 @@ Matches a callable if it's type annotations denote the given return type.
 def g(x: int) -> str:
     ...
 
+
 match(g, Arguments(int) & Returns(str))
 ```
 
 ### `Transformed(function, pattern)`
 
-Transforms the currently looked at value by applying `function` on it and matches the result against `pattern`.
-In Haskell and other languages this is known as a [_view pattern_](https://gitlab.haskell.org/ghc/ghc/-/wikis/view-patterns).
+Transforms the currently looked at value by applying `function` on it and matches the result against `pattern`. In
+Haskell and other languages this is known as a [_view
+pattern_](https://gitlab.haskell.org/ghc/ghc/-/wikis/view-patterns).
 
 ```python
 def sha256(v: str) -> str:
     import hashlib
     return hashlib.new('sha256', v.encode('utf8')).hexdigest()
 
+
 match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
 ```
 
 ### `At(path, pattern)`
 
-Checks whether the nested object to be matched satisfied pattern at the given path.
-The match fails if the given path can not be resolved.
+Checks whether the nested object to be matched satisfied pattern at the given path. The match fails if the given path
+can not be resolved.
 
 ```python
 record = {
@@ -309,6 +350,7 @@ class Min(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict=False) -> MatchResult:
         return ctx.match_if(value >= self.min)
+
 
 match(3, Min(1))  # matches
 match(3, Min(5))  # does not match
