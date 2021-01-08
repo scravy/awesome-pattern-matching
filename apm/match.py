@@ -16,16 +16,16 @@ class AttributesAdapter:
             raise AttributeError(*err.args)
 
 
-class _NoValue:
+class NoValue:
     pass
 
 
-def match(value, pattern=_NoValue, *, multimatch=True, strict=False, argresult=False) -> MatchResult:
+def match(value, pattern=NoValue, *, multimatch=True, strict=False, argresult=False) -> MatchResult:
     ctx = MatchContext(
         multimatch=multimatch,
         strict=strict,
     )
-    if pattern is _NoValue:
+    if pattern is NoValue:
         raise TryMatch(value, ctx=ctx)
     result = ctx.match(value, pattern, strict=strict)
     if argresult:

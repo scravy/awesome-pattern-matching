@@ -49,7 +49,7 @@ if match(f, Arguments(int, float) & Returns(int)):
     print("Function satisfies required signature")
 ```
 
-Different matching statement styles can be used:
+For matching and selecting from multiple cases, choose your style:
 
 ```python
 from apm import *
@@ -79,6 +79,21 @@ except Case(Between(11, 20)):
     print("It's between 1 and 10")
 except Default:
     print("It's not between 1 and 20")
+
+# The declarative style
+@case_distinction
+def f(n: Match(Between(1, 10))):
+    print("It's between 1 and 10")
+
+@case_distinction
+def f(n: Match(Between(11, 20))):
+    print("It's between 1 and 10")
+
+@case_distinction
+def f(n):
+    print("It's not between 1 and 20")
+
+f(value)
 ```
 
 ## Installation

@@ -17,6 +17,7 @@ from .core import \
     Value, \
     _
 from .match import match
+from .overload import case_distinction, Match
 from .patterns import \
     Arguments, \
     At, \
@@ -54,9 +55,9 @@ __all__ = [
     '_',
 
     'case',
-
     'match',
-
+    'case_distinction',
+    'Match',
     'Case',
     'Default',
 
