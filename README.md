@@ -249,6 +249,25 @@ Checks whether the value matches all of the given pattern. Equivalent to `p1 & p
 match("quux", AllOf(InstanceOf("str"), Regex("[a-z]+")))
 ```
 
+### `Not(pattern)`
+
+Matches if the given pattern does not match.
+
+```python
+match(3, Not(4))  # matches
+match(5, Not(4))  # matches
+match(4, Not(4))  # does not match
+```
+
+The bitflip prefix operator (`~`) can be used to express the same thing. Note that it does not work on bare values,
+so they need to be wrapped in `Value`.
+
+```python
+match(3, ~Value(4))  # matches
+match(5, ~Value(4))  # matches
+match(4, ~Value(4))  # does not match
+```
+
 ### `Each(pattern [, at_least=]`
 
 Matches each item in an iterable.
