@@ -159,3 +159,8 @@ class ReadmeExamples(unittest.TestCase):
 
         self.assertTrue(match(3, Min(1)))
         self.assertFalse(match(3, Min(5)))
+
+    def test_none_of(self):
+        self.assertTrue(match("string", ~OneOf("foo", "bar")))
+        self.assertFalse(match("foo", ~OneOf("foo", "bar")))
+        self.assertFalse(match("bar", ~OneOf("foo", "bar")))
