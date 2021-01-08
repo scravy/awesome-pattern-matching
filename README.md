@@ -6,9 +6,10 @@
 - Powerful
 - Extensible
 - Composable
+- Functional  
 - Python 3.8+
 - Typed (IDE friendly)
-- Offers different styles
+- Offers different styles (expression, declarative, statement, ...)
 
 There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
 also [there's a PEP on it's way for a match construct](https://www.python.org/dev/peps/pep-0634/). However, I wanted
@@ -65,9 +66,9 @@ else:
     print("It's not between 1 and 20")
 
 # The expression style
-case(value)
-    .of(Between(1, 10), lambda: print("It's between 1 and 10"))
-    .of(Between(11, 20), lambda: print("It's between 11 and 20"))
+case(value) \
+    .of(Between(1, 10), lambda: print("It's between 1 and 10")) \
+    .of(Between(11, 20), lambda: print("It's between 11 and 20")) \
     .otherwise(lambda: print("It's not between 1 and 20"))
 
 # The statement style
@@ -100,6 +101,55 @@ match(value,
       Between( 1, 10), lambda: print("It's between 1 and 10"),
       Between(11, 20), lambda: print("It's between 11 and 20"),
       _,               lambda: print("It's not between 1 and 20"))
+```
+
+## Recursive pattern matches
+
+Patterns are applied recursively, such that nested structures can be matched arbitrarily deep.
+This is super useful for extracting data from complicated structures:
+
+```python
+from apm import *
+
+sample_k8s_response = {
+    "containers": [
+        {
+            "args": [
+                "--cert-dir=/tmp",
+                "--secure-port=4443",
+                "--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
+                "--kubelet-use-node-status-port"
+            ],
+            "image": "k8s.gcr.io/metrics-server/metrics-server:v0.4.1",
+            "imagePullPolicy": "IfNotPresent",
+            "name": "metrics-server",
+            "ports": [
+                {
+                    "containerPort": 4443,
+                    "name": "https",
+                    "protocol": "TCP"
+                }
+            ]
+        }
+    ]
+}
+
+if result := match(sample_k8s_response, {
+        "containers": Each({
+            "image": 'image' @ _,
+            "name": 'name' @ _,
+            "ports": Each({
+                "containerPort": 'port' @ _
+            }),
+        })
+    }):
+    print(f"Image: {result['image']}, Name: {result['name']}, Port: {result['port']}")
+```
+
+The above will print
+
+```
+Image: k8s.gcr.io/metrics-server/metrics-server:v0.4.1, Name: metrics-server, Port: 4443
 ```
 
 ## Installation
@@ -190,7 +240,7 @@ if result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name
 As this syntax is rather verbose, two short hand notations can be used:
 
 ```python
-# using the matrix multiplicatio operator '@' (syntax resembles that of pattern matching in Haskell)
+# using the matrix multiplication operator '@' (syntax resembles that of Haskell and Scala)
 if result := match([1, 2, 3, 4], [1, 2, 'tail' @ Remaining(InstanceOf(int))]):
     print(result['tail'])  ## -> [3, 4]
 
