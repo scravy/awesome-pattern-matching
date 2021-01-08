@@ -38,8 +38,8 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
             except TypeError:
                 continue
             matches = True
+            type_hints = typing.get_type_hints(func)
             for name, value in bound.arguments.items():
-                type_hints = typing.get_type_hints(func)
                 if name not in type_hints:
                     continue
                 annotation = type_hints[name]
