@@ -181,6 +181,18 @@ if result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name
     print(result['tail'])  ## -> [3, 4]
 ```
 
+As this syntax is rather verbose, two short hand notations can be used:
+
+```python
+# using the matrix multiplicatio operator '@' (syntax resembles that of pattern matching in Haskell)
+if result := match([1, 2, 3, 4], [1, 2, 'tail' @ Remaining(InstanceOf(int))]):
+    print(result['tail'])  ## -> [3, 4]
+
+# using the right shift operator
+if result := match([1, 2, 3, 4], [1, 2, Remaining(InstanceOf(int)) >> 'tail']):
+    print(result['tail'])  ## -> [3, 4]
+```
+
 ### `Strict(pattern)`
 
 Performs a strict pattern match. A strict pattern match also compares the type of verbatim values. That is, while
