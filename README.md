@@ -42,10 +42,8 @@ Some fancy matching patterns are available out of the box:
 ```python
 from apm import *
 
-
 def f(x: int, y: float) -> int:
     pass
-
 
 if match(f, Arguments(int, float) & Returns(int)):
     print("Function satisfies required signature")
@@ -82,32 +80,26 @@ except Case(Between(11, 20)):
 except Default:
     print("It's not between 1 and 20")
 
-
 # The declarative style
 @case_distinction
 def f(n: Match(Between(1, 10))):
     print("It's between 1 and 10")
 
-
 @case_distinction
 def f(n: Match(Between(11, 20))):
     print("It's between 11 and 20")
 
-
 @case_distinction
 def f(n):
     print("It's not between 1 and 20")
-
 
 f(value)
 ```
 
 ## Installation
 
-```python
-pip
-install
-awesome - pattern - matching
+```bash
+pip install awesome-pattern-matching
 ```
 
 ## Very slim User Guide
@@ -350,7 +342,6 @@ class Min(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict=False) -> MatchResult:
         return ctx.match_if(value >= self.min)
-
 
 match(3, Min(1))  # matches
 match(3, Min(5))  # does not match
