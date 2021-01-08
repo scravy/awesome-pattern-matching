@@ -268,6 +268,12 @@ match(5, ~Value(4))  # matches
 match(4, ~Value(4))  # does not match
 ```
 
+`Not` can be used do create a `NoneOf` kind of pattern:
+
+```python
+match("string", ~OneOf("foo", "bar"))  # matches everything except "foo" and "bar"
+```
+
 ### `Each(pattern [, at_least=]`
 
 Matches each item in an iterable.
