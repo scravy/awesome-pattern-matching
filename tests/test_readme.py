@@ -223,3 +223,8 @@ class ReadmeExamples(unittest.TestCase):
         except Default:
             user = "anonymous"
         self.assertEqual("Jane Doe", user)
+
+    def test_contains(self):
+        self.assertTrue(match("hello there, world", Contains("there")))
+        self.assertTrue(match([1, 2, 3], Contains(2) & Contains(3)))
+        self.assertTrue(match({'foo': 1, 'bar': 2}, Contains('quux') | Contains('bar')))

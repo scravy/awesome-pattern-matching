@@ -1,4 +1,3 @@
-
 # Awesome Pattern Matching (_apm_) for Python
 
 [![Github Actions](https://github.com/scravy/awesome-pattern-matching/workflows/Python%20application/badge.svg)](https://github.com/scravy/awesome-pattern-matching/actions) [![Downloads](https://static.pepy.tech/personalized-badge/awesome-pattern-matching?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads)](https://pepy.tech/project/awesome-pattern-matching) [![PyPI version](https://badge.fury.io/py/awesome-pattern-matching.svg)](https://pypi.org/project/awesome-pattern-matching/)
@@ -82,6 +81,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
   - [`Between(lower, upper)`](#betweenlower-upper)
   - [`Length(length)`](#lengthlength)
+  - [`Contains(item)`](#containsitem)
   - [`Check(predicate)`](#checkpredicate)
   - [`InstanceOf(*types)`](#instanceoftypes)
   - [`SubclassOf(*types)`](#subclassoftypes)
@@ -578,6 +578,17 @@ match("abc", Length(3))
 match("abc", Length(at_least=2))
 match("abc", Length(at_most=4))
 match("abc", Length(at_least=2, at_most=4))
+```
+
+
+### `Contains(item)`
+
+Matches an object if it contains the given item.
+
+```python
+match("hello there, world", Contains("there"))
+match([1, 2, 3], Contains(2) & Contains(3))
+match({'foo': 1, 'bar': 2}, Contains('quux') | Contains('bar'))
 ```
 
 
