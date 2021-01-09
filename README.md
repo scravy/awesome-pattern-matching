@@ -1,37 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [Awesome Pattern Matching (_apm_) for Python](#awesome-pattern-matching-_apm_-for-python)
-  - [Nested pattern matches](#nested-pattern-matches)
-  - [Multimatch](#multimatch)
-  - [Strict vs non-strict matches](#strict-vs-non-strict-matches)
-  - [Match head and tail of a list](#match-head-and-tail-of-a-list)
-  - [Wildcard matches anything using `...` or `_`](#wildcard-matches-anything-using--or-_)
-  - [The different styles in detail](#the-different-styles-in-detail)
-    - [Simple style](#simple-style)
-    - [Expression style](#expression-style)
-    - [Statement style](#statement-style)
-    - [Declarative style](#declarative-style)
-      - [Nota bene: Overloading using `@case_distinction`](#nota-bene-overloading-using-case_distinction)
-  - [Available patterns](#available-patterns)
-    - [`Capture(pattern, name=<str>)`](#capturepattern-namestr)
-    - [`Strict(pattern)`](#strictpattern)
-    - [`OneOf(pattern1, pattern2, ..)`](#oneofpattern1-pattern2-)
-    - [`AllOf(pattern1, pattern2, ..)`](#allofpattern1-pattern2-)
-    - [`Not(pattern)`](#notpattern)
-    - [`Each(pattern [, at_least=]`](#eachpattern--at_least)
-    - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
-    - [`Length(length)`](#lengthlength)
-    - [`Check(predicate)`](#checkpredicate)
-    - [`InstanceOf(type1 [, type2 [, ..]])`](#instanceoftype1--type2--)
-    - [`Arguments(*types)`](#argumentstypes)
-    - [`Returns(type)`](#returnstype)
-    - [`Transformed(function, pattern)`](#transformedfunction-pattern)
-    - [`At(path, pattern)`](#atpath-pattern)
-  - [Extensible](#extensible)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Awesome Pattern Matching (_apm_) for Python
 
@@ -45,7 +11,7 @@ pip install awesome-pattern-matching
 - Powerful
 - Extensible
 - Composable
-- Functional  
+- Functional
 - Python 3.8+
 - Typed (IDE friendly)
 - Offers different styles (expression, declarative, statement, ...)
@@ -88,6 +54,43 @@ def f(x: int, y: float) -> int:
 if match(f, Arguments(int, float) & Returns(int)):
     print("Function satisfies required signature")
 ```
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Awesome Pattern Matching (_apm_) for Python](#awesome-pattern-matching-_apm_-for-python)
+  - [Nested pattern matches](#nested-pattern-matches)
+  - [Multimatch](#multimatch)
+  - [Strict vs non-strict matches](#strict-vs-non-strict-matches)
+  - [Match head and tail of a list](#match-head-and-tail-of-a-list)
+  - [Wildcard matches anything using `...` or `_`](#wildcard-matches-anything-using--or-_)
+  - [The different styles in detail](#the-different-styles-in-detail)
+    - [Simple style](#simple-style)
+    - [Expression style](#expression-style)
+    - [Statement style](#statement-style)
+    - [Declarative style](#declarative-style)
+      - [Nota bene: Overloading using `@case_distinction`](#nota-bene-overloading-using-case_distinction)
+  - [Available patterns](#available-patterns)
+    - [`Capture(pattern, name=<str>)`](#capturepattern-namestr)
+    - [`Strict(pattern)`](#strictpattern)
+    - [`OneOf(pattern1, pattern2, ..)`](#oneofpattern1-pattern2-)
+    - [`AllOf(pattern1, pattern2, ..)`](#allofpattern1-pattern2-)
+    - [`Not(pattern)`](#notpattern)
+    - [`Each(pattern [, at_least=]`](#eachpattern--at_least)
+    - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
+    - [`Length(length)`](#lengthlength)
+    - [`Check(predicate)`](#checkpredicate)
+    - [`InstanceOf(type1 [, type2 [, ..]])`](#instanceoftype1--type2--)
+    - [`Arguments(*types)`](#argumentstypes)
+    - [`Returns(type)`](#returnstype)
+    - [`Transformed(function, pattern)`](#transformedfunction-pattern)
+    - [`At(path, pattern)`](#atpath-pattern)
+  - [Extensible](#extensible)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Multiple Styles
 
 For matching and selecting from multiple cases, choose your style:
 
