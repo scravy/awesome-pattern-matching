@@ -291,6 +291,10 @@ match([1, 2, 3, 4], [1, _, 3, _])
 match([1, 2, 3, 4], [1, ..., 3, ...])
 ```
 
+Since `...` is a plain python value none of `|`, `&`, `^`, `~`, '@', or `>>` are overloaded. If you want to capture
+you would want to use `_` which is an instance of Pattern. A useful convention is to use `_` if the matched piece is
+going to be captured, and `...` if the matching part is actually not of interest and to be ignored.
+
 ## The different styles in detail
 
 ### Simple style
@@ -306,7 +310,6 @@ value = {"a": 7, "b": "foo", "c": "bar"}
 
 if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
     print(result['value'])  # ["foo", "bar"]
-    #     ^^^ access to capture
 ```
 
 ### Expression style
@@ -315,6 +318,16 @@ if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
 - 💚 vanilla python
 - 💚 can return values
 - 🖤 so terse that it is sometimes hard to read
+
+The expression style is summarized:
+
+```python
+case(value).of(pattern, action) ... .otherwise(default_action)
+```
+
+...where action is either a value or a callable. The captures from the matching result are bound to the named
+parameters of the given callable, i.e. `result['foo']` and `result['bar']` from `'foo' @ _` and `'bar' @ _` will be
+bound to `foo` and `bar` respectively in `lambda foo, bar: ...`.
 
 ```python
 from apm import *
