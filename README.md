@@ -1,6 +1,45 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Awesome Pattern Matching (_apm_) for Python](#awesome-pattern-matching-_apm_-for-python)
+  - [Nested pattern matches](#nested-pattern-matches)
+  - [Multimatch](#multimatch)
+  - [Strict vs non-strict matches](#strict-vs-non-strict-matches)
+  - [Match head and tail of a list](#match-head-and-tail-of-a-list)
+  - [Wildcard matches anything using `...` or `_`](#wildcard-matches-anything-using--or-_)
+  - [The different styles in detail](#the-different-styles-in-detail)
+    - [Simple style](#simple-style)
+    - [Expression style](#expression-style)
+    - [Statement style](#statement-style)
+    - [Declarative style](#declarative-style)
+      - [Nota bene: Overloading using `@case_distinction`](#nota-bene-overloading-using-case_distinction)
+  - [Available patterns](#available-patterns)
+    - [`Capture(pattern, name=<str>)`](#capturepattern-namestr)
+    - [`Strict(pattern)`](#strictpattern)
+    - [`OneOf(pattern1, pattern2, ..)`](#oneofpattern1-pattern2-)
+    - [`AllOf(pattern1, pattern2, ..)`](#allofpattern1-pattern2-)
+    - [`Not(pattern)`](#notpattern)
+    - [`Each(pattern [, at_least=]`](#eachpattern--at_least)
+    - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
+    - [`Length(length)`](#lengthlength)
+    - [`Check(predicate)`](#checkpredicate)
+    - [`InstanceOf(type1 [, type2 [, ..]])`](#instanceoftype1--type2--)
+    - [`Arguments(*types)`](#argumentstypes)
+    - [`Returns(type)`](#returnstype)
+    - [`Transformed(function, pattern)`](#transformedfunction-pattern)
+    - [`At(path, pattern)`](#atpath-pattern)
+  - [Extensible](#extensible)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Awesome Pattern Matching (_apm_) for Python
 
 [![Github Actions](https://github.com/scravy/awesome-pattern-matching/workflows/Python%20application/badge.svg)](https://github.com/scravy/awesome-pattern-matching/actions) [![Downloads](https://static.pepy.tech/personalized-badge/awesome-pattern-matching?period=total&units=international_system&left_color=black&right_color=orange&left_text=Downloads)](https://pepy.tech/project/awesome-pattern-matching) [![PyPI version](https://badge.fury.io/py/awesome-pattern-matching.svg)](https://pypi.org/project/awesome-pattern-matching/)
+
+```bash
+pip install awesome-pattern-matching
+```
 
 - Simple
 - Powerful
@@ -101,12 +140,6 @@ match(value,
       Between( 1, 10), lambda: print("It's between 1 and 10"),
       Between(11, 20), lambda: print("It's between 11 and 20"),
       _,               lambda: print("It's not between 1 and 20"))
-```
-
-## Installation
-
-```bash
-pip install awesome-pattern-matching
 ```
 
 ## Nested pattern matches
@@ -358,8 +391,9 @@ add("a", "b")
 add(1, 2)
 ```
 
+## Available patterns
 
-## `Capture(pattern, name=<str>)`
+### `Capture(pattern, name=<str>)`
 
 Captures a piece of the thing being matched by name.
 
@@ -380,7 +414,7 @@ if result := match([1, 2, 3, 4], [1, 2, Remaining(InstanceOf(int)) >> 'tail']):
     print(result['tail'])  ## -> [3, 4]
 ```
 
-## `Strict(pattern)`
+### `Strict(pattern)`
 
 Performs a strict pattern match. A strict pattern match also compares the type of verbatim values. That is, while
 _`apm`_ would match `3` with `3.0` it would not do so when using `Strict`. Also _`apm`_ performs partial matches of
@@ -396,7 +430,7 @@ match({"a": 3, "b": 7}, Strict({"a": ...}))
 match(3.0, Strict(3))
 ```
 
-## `OneOf(pattern1, pattern2, ..)`
+### `OneOf(pattern1, pattern2, ..)`
 
 Matches against any of the provided patterns. Equivalent to `p1 | p2 | p3 | ..`
 (but operator overloading does not work with values that do not inherit from `Pattern`)
@@ -427,7 +461,7 @@ Since bare values do not inherit from `Pattern` they can be wrapped in `Value`:
 match("quux", Value("foo") | Value("quux"))
 ```
 
-## `AllOf(pattern1, pattern2, ..)`
+### `AllOf(pattern1, pattern2, ..)`
 
 Checks whether the value matches all of the given pattern. Equivalent to `p1 & p2 & p3 & ..`
 (but operator overloading does not work with values that do not inherit from `Pattern`)
@@ -436,7 +470,7 @@ Checks whether the value matches all of the given pattern. Equivalent to `p1 & p
 match("quux", AllOf(InstanceOf("str"), Regex("[a-z]+")))
 ```
 
-## `Not(pattern)`
+### `Not(pattern)`
 
 Matches if the given pattern does not match.
 
@@ -461,7 +495,13 @@ match(4, ~Value(4))  # does not match
 match("string", ~OneOf("foo", "bar"))  # matches everything except "foo" and "bar"
 ```
 
-## `Each(pattern [, at_least=]`
+`Not` can be used to create a pattern that never matches:
+
+```python
+Not(...)
+```
+
+### `Each(pattern [, at_least=]`
 
 Matches each item in an iterable.
 
@@ -469,7 +509,7 @@ Matches each item in an iterable.
 match(range(1, 10), Each(Between(1, 9)))
 ```
 
-## `EachItem(key_pattern, value_pattern)`
+### `EachItem(key_pattern, value_pattern)`
 
 Matches an object if each key satisfies `key_pattern` and each value satisfies `value_pattern`.
 
@@ -477,7 +517,7 @@ Matches an object if each key satisfies `key_pattern` and each value satisfies `
 match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
 ```
 
-## `Length(length)`
+### `Length(length)`
 
 Matches an object if it has the given length. Alternatively also accepts `at_least` and `at_most` keyword arguments.
 
@@ -488,7 +528,7 @@ match("abc", Length(at_most=4))
 match("abc", Length(at_least=2, at_most=4))
 ```
 
-## `Check(predicate)`
+### `Check(predicate)`
 
 Matches an object if it satisfies the given predicate.
 
@@ -496,7 +536,7 @@ Matches an object if it satisfies the given predicate.
 match(2, Check(lambda x: x % 2 == 0))
 ```
 
-## `InstanceOf(type1 [, type2 [, ..]])`
+### `InstanceOf(type1 [, type2 [, ..]])`
 
 Matches an object if it is an instance of any of the given types.
 
@@ -504,7 +544,7 @@ Matches an object if it is an instance of any of the given types.
 match(1, InstanceOf(int, flaot))
 ```
 
-## `Arguments(*types)`
+### `Arguments(*types)`
 
 Matches a callable if it's type annotations correspond to the given types. Very useful for implementing rich APIs.
 
@@ -535,7 +575,7 @@ match(f, Strict(Arguments(x=int, y=float, z=str)))  # matches
 ```
 
 
-## `Returns(type)`
+### `Returns(type)`
 
 Matches a callable if it's type annotations denote the given return type.
 
@@ -547,7 +587,7 @@ def g(x: int) -> str:
 match(g, Arguments(int) & Returns(str))
 ```
 
-## `Transformed(function, pattern)`
+### `Transformed(function, pattern)`
 
 Transforms the currently looked at value by applying `function` on it and matches the result against `pattern`. In
 Haskell and other languages this is known as a [_view
@@ -562,7 +602,7 @@ def sha256(v: str) -> str:
 match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
 ```
 
-## `At(path, pattern)`
+### `At(path, pattern)`
 
 Checks whether the nested object to be matched satisfied pattern at the given path. The match fails if the given path
 can not be resolved.
