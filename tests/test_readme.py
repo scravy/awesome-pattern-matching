@@ -6,6 +6,7 @@ from apm import *
 class ReadmeExamples(unittest.TestCase):
 
     def test_first_example(self):
+        # noinspection PyUnresolvedReferences
         if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
             self.assertEqual(2, result['2nd'])
             self.assertEqual(3, result['3rd'])
@@ -164,3 +165,61 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match("string", ~OneOf("foo", "bar")))
         self.assertFalse(match("foo", ~OneOf("foo", "bar")))
         self.assertFalse(match("bar", ~OneOf("foo", "bar")))
+
+    # noinspection PyUnresolvedReferences
+    def test_multimatch(self):
+        if result := match([{'foo': 5}, 3, {'foo': 7}], Each(OneOf({'foo': 'item' @ _}, ...))):
+            self.assertEqual([5, 7], result['item'])
+        if result := match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+            self.assertEqual(5, result['item'])
+        if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)),
+                           multimatch=False):
+            self.assertEqual(7, result['item'])
+
+    def test_simple_style_example(self):
+        value = {"a": 7, "b": "foo", "c": "bar"}
+
+        if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
+            self.assertEqual(["foo", "bar"], result['value'])
+
+    def test_declarative_style_example(self):
+        @case_distinction
+        def fib(n: Match(OneOf(0, 1))):
+            return n
+
+        @case_distinction
+        def fib(n):
+            return fib(n - 2) + fib(n - 1)
+
+        self.assertEqual(0, fib(0))
+        self.assertEqual(1, fib(1))
+        self.assertEqual(1, fib(2))
+        self.assertEqual(2, fib(3))
+        self.assertEqual(3, fib(4))
+        self.assertEqual(5, fib(5))
+        self.assertEqual(8, fib(6))
+
+    def test_overload_example(self):
+        from apm.overload import overload
+
+        @overload
+        def add(a: str, b: str):
+            return "".join([a, b])
+
+        @overload
+        def add(a: int, b: int):
+            return a + b
+
+        self.assertEqual("ab", add("a", "b"))
+        self.assertEqual(3, add(1, 2))
+
+    def test_statement_example(self):
+        try:
+            match({'user': 'some-user-id', 'first_name': "Jane", 'last_name': "Doe"})
+        except Case({'first_name': 'first' @ _, 'last_name': 'last' @ _}) as result:
+            user = f"{result['first']} {result['last']}"
+        except Case({'user': 'user_id' @ _}) as result:
+            user = f"#{result['user_id']}"
+        except Default:
+            user = "anonymous"
+        self.assertEqual("Jane Doe", user)

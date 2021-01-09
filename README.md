@@ -103,7 +103,13 @@ match(value,
       _,               lambda: print("It's not between 1 and 20"))
 ```
 
-## Recursive pattern matches
+## Installation
+
+```bash
+pip install awesome-pattern-matching
+```
+
+## Nested pattern matches
 
 Patterns are applied recursively, such that nested structures can be matched arbitrarily deep.
 This is super useful for extracting data from complicated structures:
@@ -152,13 +158,32 @@ The above will print
 Image: k8s.gcr.io/metrics-server/metrics-server:v0.4.1, Name: metrics-server, Port: 4443
 ```
 
-## Installation
+## Multimatch
 
-```bash
-pip install awesome-pattern-matching
+By default `match` records all matches for captures. If for example `'item' @ InstanceOf(int)` matches multiple times,
+each match will be recorded in `result['item']`.
+
+```python
+if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+    print(result['item'])  # [5, 7]
 ```
 
-## Very slim User Guide
+If the capture matches only once `result['item']` returns exactly that.
+
+```python
+if result := match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+    print(result['item'])  # 5
+```
+
+If the capture matched several items a list of these items will be returned. `match` accepts a `multimatch` keyword argument
+which can be set to `False` to avoid this (in that case the capture will be set to the last match).
+
+```python
+if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)), multimatch=False):
+    print(result['item'])  # 7
+```
+
+## Strict vs non-strict matches
 
 Any value which occurs verbatim in a pattern is matched verbatim (`int`, `str`, `list`, ...), except Dictionaries (
 anything which has an `items()` actually).
@@ -189,6 +214,8 @@ match(ls, [1, 2, 3])  # matches
 match(ls, [1, 2])  # does not match
 ```
 
+## Match head and tail of a list
+
 It is possible to match the remainder of a list though:
 
 ```python
@@ -216,7 +243,7 @@ match(ls, [1, Remaining(..., at_least=2)])
 The above example also showcases how `Remaining` can be made to match
 `at_least` _n_ number of items (`Each` also has an `at_least` keyword argument).
 
-### Match anything using `...` or `_`
+## Wildcard matches anything using `...` or `_`
 
 A wildcard pattern can be expressed using `...`, the ellipsis object. An alternate, to some people more familiar syntax,
 is `_`. There is actually a difference between `...` and `_`. The ellipsis (`...`) is a native python type, whereas `_`
@@ -228,7 +255,111 @@ match([1, 2, 3, 4], [1, _, 3, _])
 match([1, 2, 3, 4], [1, ..., 3, ...])
 ```
 
-### `Capture(pattern, name=<str>)`
+## The different styles in detail
+
+### Simple style
+
+- 💚 has access to result captures
+- 💚 vanilla python
+- 💔 can not return values (since it's a statement, not an expression)
+
+```python
+from apm import *
+
+value = {"a": 7, "b": "foo", "c": "bar"}
+
+if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
+    print(result['value'])  # ["foo", "bar"]
+    #     ^^^ access to capture
+```
+
+### Expression style
+
+- 💚 has access to result captures
+- 💚 vanilla python
+- 💚 can return values
+- 🧡 so terse that it is sometimes hard to read
+
+```python
+from apm import *
+
+display_name = case({'user': 'some-user-id', 'first_name': "Jane", 'last_name': "Doe"}) \
+    .of({'first_name': 'first' @ _, 'last_name': 'last' @ _}, lambda first, last: f"{first}, {last}") \
+    .of({'user': 'user_id' @ _}, lambda user_id: f"#{user_id}") \
+    .otherwise("anonymous")
+```
+
+_Note: To return a value an `.otherwise(...)` case must always be present._
+
+### Statement style
+
+This is arguable the most hacky style in _`apm`_, as it re-uses the `try .. except`
+mechanism. It is nevertheless quite readable.
+
+- 💚 has access to result captures
+- 💚 very readable
+- 💔 can not return values (since it's a statement, not an expression)
+- 🧡 misuse of the `try .. except` statement
+
+```python
+from apm import *
+
+try:
+    match({'user': 'some-user-id', 'first_name': "Jane", 'last_name': "Doe"})
+except Case({'first_name': 'first' @ _, 'last_name': 'last' @ _}) as result:
+    user = f"{result['first']} {result['last']}"
+except Case({'user': 'user_id' @ _}) as result:
+    user = f"#{result['user_id']}"
+except Default:
+    user = "anonymous"
+    
+print(user)  # "Jane Doe"
+```
+
+### Declarative style
+
+- 💔 does not have access to result captures
+- 💚 very readable
+- 💚 can return values
+- 🧡 the most bloated version of all styles
+
+```python
+from apm import *
+
+@case_distinction
+def fib(n: Match(OneOf(0, 1))):
+   return n
+
+@case_distinction
+def fib(n):
+    return fib(n - 2) + fib(n - 1)
+
+for i in range(0, 6):
+    print(fib(i))
+```
+
+#### Nota bene: Overloading using `@case_distinction`
+
+If not for its pattern matching capabilities, `@case_distinction` can be used
+to implement overloading. In fact, it can be imported as `@overload`.
+The mechanism is aware of arity and argument types.
+
+```python
+from apm.overload import overload
+@overload
+def add(a: str, b: str):
+    return "".join([a, b])
+
+@overload
+def add(a: int, b: int):
+    return a + b
+
+add("a", "b")
+add(1, 2)
+```
+
+
+## `Capture(pattern, name=<str>)`
 
 Captures a piece of the thing being matched by name.
 
@@ -249,7 +380,7 @@ if result := match([1, 2, 3, 4], [1, 2, Remaining(InstanceOf(int)) >> 'tail']):
     print(result['tail'])  ## -> [3, 4]
 ```
 
-### `Strict(pattern)`
+## `Strict(pattern)`
 
 Performs a strict pattern match. A strict pattern match also compares the type of verbatim values. That is, while
 _`apm`_ would match `3` with `3.0` it would not do so when using `Strict`. Also _`apm`_ performs partial matches of
@@ -265,7 +396,7 @@ match({"a": 3, "b": 7}, Strict({"a": ...}))
 match(3.0, Strict(3))
 ```
 
-### `OneOf(pattern1, pattern2, ..)`
+## `OneOf(pattern1, pattern2, ..)`
 
 Matches against any of the provided patterns. Equivalent to `p1 | p2 | p3 | ..`
 (but operator overloading does not work with values that do not inherit from `Pattern`)
@@ -296,7 +427,7 @@ Since bare values do not inherit from `Pattern` they can be wrapped in `Value`:
 match("quux", Value("foo") | Value("quux"))
 ```
 
-### `AllOf(pattern1, pattern2, ..)`
+## `AllOf(pattern1, pattern2, ..)`
 
 Checks whether the value matches all of the given pattern. Equivalent to `p1 & p2 & p3 & ..`
 (but operator overloading does not work with values that do not inherit from `Pattern`)
@@ -305,7 +436,7 @@ Checks whether the value matches all of the given pattern. Equivalent to `p1 & p
 match("quux", AllOf(InstanceOf("str"), Regex("[a-z]+")))
 ```
 
-### `Not(pattern)`
+## `Not(pattern)`
 
 Matches if the given pattern does not match.
 
@@ -330,7 +461,7 @@ match(4, ~Value(4))  # does not match
 match("string", ~OneOf("foo", "bar"))  # matches everything except "foo" and "bar"
 ```
 
-### `Each(pattern [, at_least=]`
+## `Each(pattern [, at_least=]`
 
 Matches each item in an iterable.
 
@@ -338,7 +469,7 @@ Matches each item in an iterable.
 match(range(1, 10), Each(Between(1, 9)))
 ```
 
-### `EachItem(key_pattern, value_pattern)`
+## `EachItem(key_pattern, value_pattern)`
 
 Matches an object if each key satisfies `key_pattern` and each value satisfies `value_pattern`.
 
@@ -346,7 +477,7 @@ Matches an object if each key satisfies `key_pattern` and each value satisfies `
 match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
 ```
 
-### `Length(length)`
+## `Length(length)`
 
 Matches an object if it has the given length. Alternatively also accepts `at_least` and `at_most` keyword arguments.
 
@@ -357,7 +488,7 @@ match("abc", Length(at_most=4))
 match("abc", Length(at_least=2, at_most=4))
 ```
 
-### `Check(predicate)`
+## `Check(predicate)`
 
 Matches an object if it satisfies the given predicate.
 
@@ -365,7 +496,7 @@ Matches an object if it satisfies the given predicate.
 match(2, Check(lambda x: x % 2 == 0))
 ```
 
-### `InstanceOf(type1 [, type2 [, ..]])`
+## `InstanceOf(type1 [, type2 [, ..]])`
 
 Matches an object if it is an instance of any of the given types.
 
@@ -373,7 +504,7 @@ Matches an object if it is an instance of any of the given types.
 match(1, InstanceOf(int, flaot))
 ```
 
-### `Arguments(*types)`
+## `Arguments(*types)`
 
 Matches a callable if it's type annotations correspond to the given types. Very useful for implementing rich APIs.
 
@@ -404,7 +535,7 @@ match(f, Strict(Arguments(x=int, y=float, z=str)))  # matches
 ```
 
 
-### `Returns(type)`
+## `Returns(type)`
 
 Matches a callable if it's type annotations denote the given return type.
 
@@ -416,7 +547,7 @@ def g(x: int) -> str:
 match(g, Arguments(int) & Returns(str))
 ```
 
-### `Transformed(function, pattern)`
+## `Transformed(function, pattern)`
 
 Transforms the currently looked at value by applying `function` on it and matches the result against `pattern`. In
 Haskell and other languages this is known as a [_view
@@ -431,7 +562,7 @@ def sha256(v: str) -> str:
 match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
 ```
 
-### `At(path, pattern)`
+## `At(path, pattern)`
 
 Checks whether the nested object to be matched satisfied pattern at the given path. The match fails if the given path
 can not be resolved.
