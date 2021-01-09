@@ -47,6 +47,13 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
                     if not match(value, annotation.pattern):
                         matches = False
                         break
+                try:
+                    # noinspection PyTypeHints
+                    if not isinstance(value, annotation):
+                        matches = False
+                        break
+                except TypeError:
+                    pass
             if not matches:
                 continue
             return func(*bound.args, **bound.kwargs)
