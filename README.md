@@ -278,7 +278,7 @@ if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
 - 💚 has access to result captures
 - 💚 vanilla python
 - 💚 can return values
-- 🧡 so terse that it is sometimes hard to read
+- 🖤 so terse that it is sometimes hard to read
 
 ```python
 from apm import *
@@ -299,7 +299,7 @@ mechanism. It is nevertheless quite readable.
 - 💚 has access to result captures
 - 💚 very readable
 - 💔 can not return values (since it's a statement, not an expression)
-- 🧡 misuse of the `try .. except` statement
+- 🖤 misuse of the `try .. except` statement
 
 ```python
 from apm import *
@@ -321,7 +321,7 @@ print(user)  # "Jane Doe"
 - 💔 does not have access to result captures
 - 💚 very readable
 - 💚 can return values
-- 🧡 the most bloated version of all styles
+- 🖤 the most bloated version of all styles
 
 ```python
 from apm import *
