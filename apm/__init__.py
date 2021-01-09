@@ -29,6 +29,7 @@ from .patterns import \
     InstanceOf, \
     IsNumber, \
     IsString, \
+    IsTruish, \
     Length, \
     Regex, \
     Returns, \
@@ -71,6 +72,7 @@ __all__ = [
     'InstanceOf',
     'IsNumber',
     'IsString',
+    'IsTruish',
     'Length',
     'Regex',
     'Returns',

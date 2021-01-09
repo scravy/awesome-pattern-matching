@@ -1,10 +1,10 @@
 import decimal
 import operator as ops
 import re
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict, Any
 
-from ._util import get_arg_types, get_return_type
-from .core import Pattern, MatchContext, MatchResult, StringPattern
+from ._util import get_arg_types, get_return_type, get_kwarg_types
+from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf
 
 
 class Check(Pattern):
@@ -20,10 +20,7 @@ class Regex(Pattern, StringPattern):
         self._regex: re.Pattern = re.compile(regex)
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        if self._regex.fullmatch(value):
-            return ctx.matches()
-        else:
-            return ctx.no_match()
+        return ctx.match_if(bool(self._regex.fullmatch(value)))
 
     def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
         if result := self._regex.match(remaining):
@@ -63,16 +60,20 @@ class Between(Pattern):
 
 
 class Length(Pattern):
-    def __init__(self, length, /):
-        self._length = length
+    def __init__(self, length=None, /, at_least: int = None, at_most: int = None):
+        if length is not None:
+            if at_least is not None or at_most is not None:
+                raise ValueError("If length is given, 'at_least' or 'at_most' must not be given.")
+            self._at_least = length
+            self._at_most = length
+        else:
+            self._at_least = at_least
+            self._at_most = at_most
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match_if(len(value) == self._length)
-
-
-class Truish(Pattern):
-    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match_if(value)
+        length = len(value)
+        return ctx.match_if((self._at_least is None or length >= self._at_least)
+                            and (self._at_most is None or length <= self._at_most))
 
 
 class Contains(Pattern):
@@ -93,11 +94,15 @@ class Transformed(Pattern):
 
 
 class Arguments(Pattern):
-    def __init__(self, *arg_patterns):
+    def __init__(self, *arg_patterns, **kwargs):
         self._pattern = list(arg_patterns)
+        self._kwargs: Dict[str, Any] = kwargs
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match(get_arg_types(value), self._pattern)
+        if self._pattern:
+            if not (result := ctx.match(get_arg_types(value), self._pattern)):
+                return result
+        return ctx.match(get_kwarg_types(value), self._kwargs, strict)
 
 
 class Returns(Pattern):
@@ -153,5 +158,18 @@ class At(Pattern):
         return ctx.match(value, self._pattern)
 
 
+class Truish(Pattern):
+    """Deprecated, use IsTruish"""
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match_if(value)
+
+
+# noinspection PyPep8Naming
+def NoneOf(*args) -> Pattern:
+    return ~OneOf(args)
+
+
+IsTruish = Truish
 IsNumber = (InstanceOf(int) & ~InstanceOf(bool)) | InstanceOf(float) | InstanceOf(decimal.Decimal)
 IsString = InstanceOf(str)

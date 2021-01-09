@@ -43,6 +43,10 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(match([], Length(0)))
         self.assertTrue(match(('abc',), Length(1)))
         self.assertTrue(match('abc', Length(3)))
+        self.assertTrue(match('abc', Length(at_least=1, at_most=4)))
+        self.assertFalse(match('abc', Length(at_least=4, at_most=10)))
+        self.assertTrue(match('abcde', Length(at_least=4, at_most=5)))
+        self.assertFalse(match('abcdef', Length(at_least=4, at_most=5)))
 
     def test_contains(self):
         self.assertTrue(match([1, 2, 3], Contains(2) & Contains(3)))
@@ -198,6 +202,15 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(match(f, Arguments(int, str)))
         self.assertFalse(match(g, Arguments(int)))
         self.assertTrue(match(h, Arguments(None, int, Remaining(str))))
+
+    def test_keyword_arguments(self):
+        # noinspection PyUnusedLocal
+        def f(x: int, y: bool):
+            pass
+
+        self.assertTrue(match(f, Arguments(x=int)))
+        self.assertFalse(match(f, Strict(Arguments(x=int))))
+        self.assertTrue(match(f, Strict(Arguments(x=int, y=bool))))
 
     def test_returns(self):
         def f() -> int:

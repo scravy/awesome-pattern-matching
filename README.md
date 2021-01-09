@@ -346,6 +346,17 @@ Matches an object if each key satisfies `key_pattern` and each value satisfies `
 match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
 ```
 
+### `Length(length)`
+
+Matches an object if it has the given length. Alternatively also accepts `at_least` and `at_most` keyword arguments.
+
+```python
+match("abc", Length(3))
+match("abc", Length(at_least=2))
+match("abc", Length(at_most=4))
+match("abc", Length(at_least=2, at_most=4))
+```
+
 ### `Check(predicate)`
 
 Matches an object if it satisfies the given predicate.
@@ -362,7 +373,7 @@ Matches an object if it is an instance of any of the given types.
 match(1, InstanceOf(int, flaot))
 ```
 
-### `Arguments(type1 [, type2 [, ..]])`
+### `Arguments(*types)`
 
 Matches a callable if it's type annotations correspond to the given types. Very useful for implementing rich APIs.
 
@@ -373,6 +384,25 @@ def f(x: int, y: float, z):
 
 match(f, Arguments(int, float, None))
 ```
+
+Arguments has an alternate form which can be used to match keyword arguments:
+
+```python
+
+def f(x: int, y: float, z: str):
+    ...
+
+match(f, Arguments(x=int, y=float))
+```
+
+The strictness rules are the same as for dictionaries (which is why the above example works).
+
+```python
+# given the f from above
+match(f, Strict(Arguments(x=int, y=float)))  # does not match
+match(f, Strict(Arguments(x=int, y=float, z=str)))  # matches
+```
+
 
 ### `Returns(type)`
 
