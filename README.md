@@ -90,7 +90,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Returns(type)`](#returnstype)
   - [`Transformed(function, pattern)`](#transformedfunction-pattern)
   - [`At(path, pattern)`](#atpath-pattern)
-- [Object(**kwargs))](#objectkwargs)
+  - [`Object(**kwargs))`](#objectkwargs)
 - [Extensible](#extensible)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -730,7 +730,7 @@ result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="
 ```
 
 
-## Object(**kwargs))
+### `Object(**kwargs))`
 
 Mostly syntactic sugar to match a dictionary nicely.
 
