@@ -31,6 +31,9 @@ from .patterns import \
     IsString, \
     IsTruish, \
     Length, \
+    Maybe, \
+    NoneOf, \
+    Object, \
     Regex, \
     Returns, \
     Transformed, \
@@ -74,6 +77,9 @@ __all__ = [
     'IsString',
     'IsTruish',
     'Length',
+    'Maybe',
+    'NoneOf',
+    'Object',
     'Regex',
     'Returns',
     'Transformed',

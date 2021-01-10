@@ -90,7 +90,12 @@ class Transformed(Pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match(self._f(value), self._pattern)
+        # noinspection PyBroadException
+        try:
+            transformed = self._f(value)
+        except Exception:
+            return ctx.no_match()
+        return ctx.match(transformed, self._pattern)
 
 
 class Arguments(Pattern):
@@ -158,6 +163,14 @@ class At(Pattern):
         return ctx.match(value, self._pattern)
 
 
+class Object(Pattern):
+    def __init__(self, **kwargs):
+        self._items = kwargs
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        return ctx.match(value, self._items, strict=strict)
+
+
 class Truish(Pattern):
     """Deprecated, use IsTruish"""
 
@@ -168,6 +181,11 @@ class Truish(Pattern):
 # noinspection PyPep8Naming
 def NoneOf(*args) -> Pattern:
     return ~OneOf(args)
+
+
+# noinspection PyPep8Naming
+def Maybe(pattern) -> Pattern:
+    return OneOf(pattern, ...)
 
 
 IsTruish = Truish

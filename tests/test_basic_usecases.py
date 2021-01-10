@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import datetime
 
 from apm import *
 
@@ -283,3 +284,42 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(match(1, IsNumber))
         self.assertTrue(match(1.0, IsNumber))
         self.assertFalse(match(True, IsNumber))
+
+    def test_object(self):
+        request = {
+            "api_version": "v1",
+            "job": {
+                "run_at": "2020-08-27 14:09:30",
+                "command": "echo 'booya'",
+            }
+        }
+
+        # noinspection PyUnresolvedReferences
+        self.assertTrue(result := match(request, Object(
+            api_version="v1",
+            job=Object(
+                run_at=Transformed(datetime.fromisoformat, 'time' @ _),
+            ) & OneOf(
+                Object(command='command' @ InstanceOf(str)),
+                Object(spawn='container' @ InstanceOf(str)),
+            )
+        )))
+        self.assertFalse('container' in result)
+        self.assertEqual(result['time'], datetime(2020, 8, 27, 14, 9, 30))
+        self.assertEqual(result['command'], "echo 'booya'")
+
+    def test_transformed_exception(self):
+        request = {
+            "api_version": "v1",
+            "job": {
+                "run_at": "junk",
+                "command": "echo 'booya'",
+            }
+        }
+
+        # noinspection PyUnresolvedReferences
+        self.assertFalse(match(request, Object(
+            job=Object(
+                run_at=Transformed(datetime.fromisoformat, 'time' @ _),
+            )
+        )))

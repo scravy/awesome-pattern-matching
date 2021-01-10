@@ -690,8 +690,18 @@ def sha256(v: str) -> str:
     import hashlib
     return hashlib.new('sha256', v.encode('utf8')).hexdigest()
 
-
 match("hello", Transformed(sha256, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
+```
+
+This is handy for matching data types like `datetime.date` as this pattern won't match if the transformation
+function errored out with an exception.
+
+```python
+from apm import *
+from datetime import date
+
+if result := match("2020-08-27", Transformed(date.fromisoformat, 'date' @ _):
+    print(repr(result['date']))  # result['date'] is a datetime.date
 ```
 
 
@@ -716,6 +726,37 @@ result['value']  # "deeply nested"
 
 # alternate form
 result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="value")}))
+```
+
+
+## Object(**kwargs))
+
+Mostly syntactic sugar to match a dictionary nicely.
+
+```python
+from apm import *
+from datetime import datetime
+
+request = {
+    "api_version": "v1",
+    "job": {
+        "run_at": "2020-08-27 14:09:30",
+        "command": "echo 'booya'",
+    }
+}
+
+if result := match(request, Object(
+    api_version="v1",
+    job=Object(
+        run_at=Transformed(datetime.fromisoformat, 'time' @ _),
+    ) & OneOf(
+        Object(command='command' @ InstanceOf(str)),
+        Object(spawn='container' @ InstanceOf(str)),
+    )
+)):
+    print(repr(result['time']))      # datetime(2020, 8, 27, 14, 9, 30)
+    print('container' not in result) # True
+    print(result['command'])         # "echo 'booya'"
 ```
 
 
