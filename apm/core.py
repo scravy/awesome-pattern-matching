@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections import Mapping  # pylint: disable=no-name-in-module
 from itertools import chain
-from typing import Optional, List, Dict, Mapping
+from typing import Optional, List, Dict
 
 
 class WildcardMatch:
