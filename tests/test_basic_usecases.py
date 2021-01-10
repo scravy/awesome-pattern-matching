@@ -335,3 +335,11 @@ class BasicUseCases(unittest.TestCase):
         r = f(**result)
         self.assertEqual({'x': 1, 'y': 2, 'z': 3}, r)
 
+    def test_maybe(self):
+        pattern = Object(a=...) & Maybe(Object(b=_ >> 'capture'))
+
+        self.assertTrue(result := match({'a': 3}, pattern))
+        self.assertFalse('capture' in result)
+        self.assertTrue(result := match({'a': 3, 'b': 5}, pattern))
+        self.assertTrue('capture' in result)
+        self.assertEqual(5, result['capture'])
