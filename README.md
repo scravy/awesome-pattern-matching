@@ -562,6 +562,21 @@ match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
 ```
 
 
+### `Some(pattern)`
+
+Matches a sequence of items within a list:
+
+```python
+if result := match(range(1, 10), [1, 'a' @ Some(...), 4, 'b' @ Some(...), 8, 9]):
+    print(result['a'])  # [2, 3]
+    print(result['b'])  # [5, 6, 7]
+```
+
+Takes the optional values `exactly`, `at_least`, and `at_most` which makes `Some` match
+either `exactly` _n_ items, `at_least` _n_, or `at_most` _n_ items (`at_least` and `at_most` can be given at the same
+time, but not together with `exactly`).
+
+
 ### `Between(lower, upper)`
 
 Matches an object if it is between `lower` and `upper` (inclusive). The optional keyword arguments
