@@ -79,6 +79,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Not(pattern)`](#notpattern)
   - [`Each(pattern [, at_least=]`](#eachpattern--at_least)
   - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
+  - [`Some(pattern)`](#somepattern)
   - [`Between(lower, upper)`](#betweenlower-upper)
   - [`Length(length)`](#lengthlength)
   - [`Contains(item)`](#containsitem)
