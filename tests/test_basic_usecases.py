@@ -323,3 +323,15 @@ class BasicUseCases(unittest.TestCase):
                 run_at=Transformed(datetime.fromisoformat, 'time' @ _),
             )
         )))
+
+    def test_splat_result(self):
+        def f(**kwargs):
+            dct = {}
+            for k, v in kwargs.items():
+                dct[k] = v
+            return dct
+
+        self.assertTrue(result := match({'a': 1, 'b': 2, 'c': 3}, Object(a=_ >> 'x', b=_ >> 'y', c=_ >> 'z')))
+        r = f(**result)
+        self.assertEqual({'x': 1, 'y': 2, 'z': 3}, r)
+

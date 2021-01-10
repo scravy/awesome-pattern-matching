@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Mapping
 
 
 class WildcardMatch:
@@ -81,7 +81,7 @@ class MatchContext:
         self.wildcards[id_].set(value)
 
 
-class MatchResult:
+class MatchResult(Mapping):
     def __init__(self, *, matches: bool, context: MatchContext):
         self._matches: bool = matches
         self._context: MatchContext = context
@@ -104,6 +104,9 @@ class MatchResult:
 
     def __iter__(self):
         return iter(self._context.groups)
+
+    def __len__(self):
+        return len(self._context.groups)
 
     def items(self):
         return self._context.groups.items()
