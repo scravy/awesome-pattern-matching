@@ -1,13 +1,25 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import Optional, List
+from typing import Optional, List, Dict
+
+
+class WildcardMatch:
+    def __init__(self, index):
+        self.index = index
+        self.value = None
+
+    def set(self, value):
+        self.value = value
+
+    def get(self):
+        return self.value
 
 
 class MatchContext:
     def __init__(self, *, multimatch: bool, strict: bool):
         self.groups = {}
-        self.wildcard_matches = []
+        self.wildcards: Dict[int, WildcardMatch] = {}
         self.multimatch = multimatch
         self.strict = strict
 
@@ -62,14 +74,21 @@ class MatchContext:
     def match_if(self, condition: bool) -> MatchResult:
         return MatchResult(matches=bool(condition), context=self)
 
-    def record(self, value):
-        self.wildcard_matches.append(value)
+    def record(self, for_pattern, value):
+        id_ = id(for_pattern)
+        if id_ not in self.wildcards:
+            self.wildcards[id_] = WildcardMatch(len(self.wildcards))
+        self.wildcards[id_].set(value)
 
 
 class MatchResult:
     def __init__(self, *, matches: bool, context: MatchContext):
         self._matches: bool = matches
         self._context: MatchContext = context
+        self._wildcard_matches: List = [None] * len(context.wildcards)
+
+        for wildcard_match in context.wildcards.values():
+            self._wildcard_matches[wildcard_match.index] = wildcard_match.value
 
     def __bool__(self):
         return self._matches
@@ -89,8 +108,11 @@ class MatchResult:
     def items(self):
         return self._context.groups.items()
 
+    def groups(self) -> Dict:
+        return self._context.groups
+
     def wildcard_matches(self) -> List:
-        return self._context.wildcard_matches
+        return self._wildcard_matches
 
 
 class Capturable:
@@ -228,7 +250,7 @@ class Value(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         if self._value is Ellipsis:
-            ctx.record(value)
+            ctx.record(self, value)
             return ctx.matches()
         if strict:
             if type(self._value) != type(value):
