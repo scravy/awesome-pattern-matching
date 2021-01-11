@@ -23,7 +23,8 @@ class Regex(Pattern, StringPattern):
         return ctx.match_if(bool(self._regex.fullmatch(value)))
 
     def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
-        if result := self._regex.match(remaining):
+        result = self._regex.match(remaining)
+        if result:
             return result.group(0)
         return None
 
@@ -105,7 +106,8 @@ class Arguments(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         if self._pattern:
-            if not (result := ctx.match(get_arg_types(value), self._pattern)):
+            result = ctx.match(get_arg_types(value), self._pattern)
+            if not result:
                 return result
         return ctx.match(get_kwarg_types(value), self._kwargs, strict)
 
@@ -126,7 +128,8 @@ class Each(Pattern):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         count = 0
         for item in value:
-            if not (result := ctx.match(item, self._pattern)):
+            result = ctx.match(item, self._pattern)
+            if not result:
                 return result
             count += 1
         return ctx.match_if(count >= self._at_least)
@@ -139,9 +142,11 @@ class EachItem(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         for k, v in value.items():
-            if not (result := ctx.match(k, self._key_pattern)):
+            result = ctx.match(k, self._key_pattern)
+            if not result:
                 return result
-            if not (result := ctx.match(v, self._value_pattern)):
+            result = ctx.match(v, self._value_pattern)
+            if not result:
                 return result
         return ctx.matches()
 

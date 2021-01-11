@@ -106,7 +106,7 @@ class BasicUseCases(unittest.TestCase):
             [1, 2, 3, Remaining(InstanceOf(int), at_least=2)]))
 
     def test_capture(self):
-        self.assertTrue(result := match(
+        result = match(
             {
                 "This": "Is A Rather Complex Beast",
                 "Created-At": "Sun Jan  3 04:08:57 CET 2021",
@@ -122,16 +122,18 @@ class BasicUseCases(unittest.TestCase):
                     "LastName": Capture(..., name="last_name"),
                 }, name="user")
             }
-        ))
+        )
+        self.assertTrue(result)
         self.assertEqual("Jane", result['first_name'])
         self.assertEqual("Doe", result['last_name'])
         self.assertEqual(102384, result['user']['UserId'])
 
     def test_remaining_with_capture(self):
-        self.assertTrue(result := match(
+        result = match(
             [1, 2, 3, 4],
             [1, 2, Capture(Remaining(...), name="tail")]
-        ))
+        )
+        self.assertTrue(result)
         self.assertEqual([3, 4], result['tail'])
 
     def test_and(self):
@@ -232,18 +234,19 @@ class BasicUseCases(unittest.TestCase):
             }
         }
 
-        self.assertTrue(result := match(record, At("foo.bar.quux", {"value": Capture(..., name="value")})))
+        result = match(record, At("foo.bar.quux", {"value": Capture(..., name="value")}))
+        self.assertTrue(result)
         self.assertEqual("deeply nested", result['value'])
 
-        self.assertTrue(result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="value")})))
+        result = match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="value")}))
+        self.assertTrue(result)
         self.assertEqual("deeply nested", result['value'])
 
         self.assertFalse(match(record, At("foo.bar.quux.baz", InstanceOf(int))))
 
     def test_string(self):
         path = "https://somehost/foo=1/bar=2/"
-
-        self.assertTrue(result := match(path, String(
+        result = match(path, String(
             Capture(OneOf("https", "http"), name="protocol"),
             "://",
             Capture(Regex("[a-zA-Z_-]+"), name="host"),
@@ -254,7 +257,8 @@ class BasicUseCases(unittest.TestCase):
             "bar=",
             Capture(Regex("[^=/]+"), name="bar"),
             Regex("/*"),
-        )))
+        ))
+        self.assertTrue(result)
         self.assertEqual("https", result['protocol'])
         self.assertEqual("somehost", result['host'])
         self.assertEqual("1", result['foo'])
@@ -264,7 +268,7 @@ class BasicUseCases(unittest.TestCase):
     def test_string_argresult(self):
         path = "https://somehost/foo=1/bar=2/"
 
-        self.assertTrue(result := match(path, String(
+        result = match(path, String(
             Capture(OneOf("https", "http"), name="protocol"),
             "://",
             Capture(Regex("[a-zA-Z_-]+"), name="host"),
@@ -275,7 +279,8 @@ class BasicUseCases(unittest.TestCase):
             "bar=",
             Capture(Regex("[^=/]+"), name="bar"),
             Regex("/*"),
-        ), argresult=True))
+        ), argresult=True)
+        self.assertTrue(result)
         self.assertEqual("https", result.protocol)
         self.assertEqual("somehost", result.host)
         self.assertEqual("1", result.foo)
@@ -296,7 +301,7 @@ class BasicUseCases(unittest.TestCase):
         }
 
         # noinspection PyUnresolvedReferences
-        self.assertTrue(result := match(request, Object(
+        result = match(request, Object(
             api_version="v1",
             job=Object(
                 run_at=Transformed(datetime.fromisoformat, 'time' @ _),
@@ -304,7 +309,8 @@ class BasicUseCases(unittest.TestCase):
                 Object(command='command' @ InstanceOf(str)),
                 Object(spawn='container' @ InstanceOf(str)),
             )
-        )))
+        ))
+        self.assertTrue(result)
         self.assertFalse('container' in result)
         self.assertEqual(result['time'], datetime(2020, 8, 27, 14, 9, 30))
         self.assertEqual(result['command'], "echo 'booya'")
@@ -332,16 +338,19 @@ class BasicUseCases(unittest.TestCase):
                 dct[k] = v
             return dct
 
-        self.assertTrue(result := match({'a': 1, 'b': 2, 'c': 3}, Object(a=_ >> 'x', b=_ >> 'y', c=_ >> 'z')))
+        result = match({'a': 1, 'b': 2, 'c': 3}, Object(a=_ >> 'x', b=_ >> 'y', c=_ >> 'z'))
+        self.assertTrue(result)
         r = f(**result)
         self.assertEqual({'x': 1, 'y': 2, 'z': 3}, r)
 
     def test_maybe(self):
         pattern = Object(a=...) & Maybe(Object(b=_ >> 'capture'))
 
-        self.assertTrue(result := match({'a': 3}, pattern))
+        result = match({'a': 3}, pattern)
+        self.assertTrue(result)
         self.assertFalse('capture' in result)
-        self.assertTrue(result := match({'a': 3, 'b': 5}, pattern))
+        result = match({'a': 3, 'b': 5}, pattern)
+        self.assertTrue(result)
         self.assertTrue('capture' in result)
         self.assertEqual(5, result['capture'])
 
@@ -355,8 +364,10 @@ class BasicUseCases(unittest.TestCase):
         class LoggedInUser(User):
             display_name: str
 
-        self.assertTrue(result := match(User("Jane", "Doe"), User("Jane", _ >> 'last_name')))
+        result = match(User("Jane", "Doe"), User("Jane", _ >> 'last_name'))
+        self.assertTrue(result)
         self.assertEqual("Doe", result['last_name'])
 
-        self.assertTrue(result := match(LoggedInUser("John", "Doe", "johndoe"), User(_, _ >> 'last_name')))
+        result = match(LoggedInUser("John", "Doe", "johndoe"), User(_, _ >> 'last_name'))
+        self.assertTrue(result)
         self.assertEqual("Doe", result['last_name'])

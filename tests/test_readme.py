@@ -8,7 +8,8 @@ class ReadmeExamples(unittest.TestCase):
 
     def test_first_example(self):
         # noinspection PyUnresolvedReferences
-        if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
+        result = match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)])
+        if result:
             self.assertEqual(2, result['2nd'])
             self.assertEqual(3, result['3rd'])
             self.assertEqual([4, 5], result['tail'])
@@ -56,7 +57,8 @@ class ReadmeExamples(unittest.TestCase):
             "Last-Name": "Doe",
         }
 
-        self.assertTrue(result := match(record, {"First-Name": Capture(Regex("[A-Z][a-z]*"), name="name")}))
+        result = match(record, {"First-Name": Capture(Regex("[A-Z][a-z]*"), name="name")})
+        self.assertTrue(result)
         self.assertEqual("Jane", result['name'])
 
     def test_records_example(self):
@@ -121,7 +123,8 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match(ls, Each(InstanceOf(int) & Between(1, 3))))
         self.assertTrue(match(ls, [1, Remaining(..., at_least=2)]))
 
-        self.assertTrue(result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name='tail')]))
+        result = match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name='tail')])
+        self.assertTrue(result)
         self.assertEqual([3, 4], result['tail'])
         self.assertTrue(match(range(1, 10), Each(Between(1, 9))))
         self.assertTrue(match("quux", OneOf("bar", "baz", "quux")))
@@ -169,18 +172,21 @@ class ReadmeExamples(unittest.TestCase):
 
     # noinspection PyUnresolvedReferences
     def test_multimatch(self):
-        if result := match([{'foo': 5}, 3, {'foo': 7}], Each(OneOf({'foo': 'item' @ _}, ...))):
+        result = match([{'foo': 5}, 3, {'foo': 7}], Each(OneOf({'foo': 'item' @ _}, ...)))
+        if result:
             self.assertEqual([5, 7], result['item'])
-        if result := match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+        result = match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)))
+        if result:
             self.assertEqual(5, result['item'])
-        if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)),
-                           multimatch=False):
+        result = match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)),
+                       multimatch=False)
+        if result:
             self.assertEqual(7, result['item'])
 
     def test_simple_style_example(self):
         value = {"a": 7, "b": "foo", "c": "bar"}
-
-        if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
+        result = match(value, EachItem(_, 'value' @ InstanceOf(str) | ...))
+        if result:
             self.assertEqual(["foo", "bar"], result['value'])
 
     def test_declarative_style_example(self):

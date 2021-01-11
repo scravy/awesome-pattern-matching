@@ -175,7 +175,8 @@ class String(Pattern):
                     ctx[name] = pattern
                 return pattern
         elif isinstance(pattern, StringPattern):
-            if (result := pattern.string_match(remaining, ctx=ctx)) is not None:
+            result = pattern.string_match(remaining, ctx=ctx)
+            if result is not None:
                 if name:
                     ctx[name] = result
                 return result
@@ -184,7 +185,8 @@ class String(Pattern):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         remaining = value
         for p in self._patterns:
-            if (matched := self.match_pattern(remaining=remaining, pattern=p, ctx=ctx)) is not None:
+            matched = self.match_pattern(remaining=remaining, pattern=p, ctx=ctx)
+            if matched is not None:
                 remaining = remaining[len(matched):]
             else:
                 return ctx.no_match()
@@ -197,7 +199,8 @@ class Capture(Pattern):
         self._name = name
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        if result := ctx.match(value, self._pattern):
+        result = ctx.match(value, self._pattern)
+        if result:
             ctx[self._name] = value
             return result
         return ctx.no_match()
@@ -274,13 +277,15 @@ class OneOf(Pattern, StringPattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         for pattern in self._patterns:
-            if result := ctx.match(value, pattern):
+            result = ctx.match(value, pattern)
+            if result:
                 return result
         return ctx.no_match()
 
     def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
         for p in self._patterns:
-            if (result := String.match_pattern(remaining=remaining, pattern=p, ctx=ctx)) is not None:
+            result = String.match_pattern(remaining=remaining, pattern=p, ctx=ctx)
+            if result is not None:
                 return result
         return None
 
@@ -291,7 +296,8 @@ class AllOf(Pattern):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         for pattern in self._patterns:
-            if not (result := ctx.match(value, pattern)):
+            result = ctx.match(value, pattern)
+            if not result:
                 return result
         return ctx.matches()
 
@@ -325,7 +331,8 @@ def _match_dict(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
     matched_keys = set()
     for key, value in items:
         if key in pattern:
-            if not (result := ctx.match(value, pattern[key])):
+            result = ctx.match(value, pattern[key])
+            if not result:
                 return result
             matched_keys.add(key)
         else:
@@ -343,7 +350,8 @@ def _match_tuple(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchRes
     if not isinstance(value, tuple) or len(pattern) != len(value):
         return ctx.no_match()
     for p, v in zip(pattern, value):
-        if not (result := ctx.match(v, p)):
+        result = ctx.match(v, p)
+        if not result:
             return result
     return ctx.matches()
 
@@ -395,7 +403,8 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
                 item = next(it)
         except StopIteration:
             return ctx.no_match()
-        if not (result := ctx.match(item, current_pattern)):
+        result = ctx.match(item, current_pattern)
+        if not result:
             return result
     try:
         next(it)

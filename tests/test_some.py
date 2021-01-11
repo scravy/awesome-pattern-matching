@@ -67,7 +67,7 @@ class Glob(unittest.TestCase):
         ))
 
     def test_capture(self):
-        self.assertTrue(result := match(
+        result = match(
             range(1, 10),
             [
                 1,
@@ -78,6 +78,7 @@ class Glob(unittest.TestCase):
                 8,
                 9,
             ]
-        ))
+        )
+        self.assertTrue(result)
         self.assertEqual(result[1], [3, 4, 5])
         self.assertEqual(result[2], [7])

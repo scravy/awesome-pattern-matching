@@ -9,7 +9,8 @@ class CaseExpr:
         self._value = value
 
     def of(self, pattern, then) -> CaseExpr:
-        if result := match(self._value, pattern):
+        result = match(self._value, pattern)
+        if result:
             if callable(then):
                 return CaseExprEnd(invoke(then, result))
             else:

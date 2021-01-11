@@ -8,7 +8,7 @@ from apm import *
 class CaptureTest(unittest.TestCase):
 
     def test_multi_capture(self):
-        self.assertTrue(result := match(
+        result = match(
             value=[{
                 "first-name": "Jane",
                 "last-name": "Doe",
@@ -17,11 +17,12 @@ class CaptureTest(unittest.TestCase):
                 "last-name": "Doe",
             }],
             pattern=Each({"first-name": Capture(..., name="first_names")})
-        ))
+        )
+        self.assertTrue(result)
         self.assertEqual(["Jane", "John"], result['first_names'])
 
     def test_last_capture(self):
-        self.assertTrue(result := match(
+        result = match(
             multimatch=False,
             value=[{
                 "first-name": "Jane",
@@ -31,11 +32,12 @@ class CaptureTest(unittest.TestCase):
                 "last-name": "Doe",
             }],
             pattern=Each({"first-name": Capture(..., name="first_name")})
-        ))
+        )
+        self.assertTrue(result)
         self.assertEqual("John", result['first_name'])
 
     def test_syntactic_sugar_rshift_operator(self):
-        self.assertTrue(result := match(sample_k8s_response, {
+        result = match(sample_k8s_response, {
             "containers": Each({
                 "image": Value(...) >> 'image',
                 "name": Value(...) >> 'name',
@@ -43,13 +45,14 @@ class CaptureTest(unittest.TestCase):
                     "containerPort": Value(...) >> 'port'
                 }),
             })
-        }))
+        })
+        self.assertTrue(result)
         self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
         self.assertEqual('metrics-server', result['name'])
         self.assertEqual(4443, result['port'])
 
     def test_syntactic_sugar_rmatmul_operator(self):
-        self.assertTrue(result := match(sample_k8s_response, {
+        result = match(sample_k8s_response, {
             "containers": Each({
                 "image": 'image' @ Value(...),
                 "name": 'name' @ Value(...),
@@ -57,13 +60,14 @@ class CaptureTest(unittest.TestCase):
                     "containerPort": 'port' @ Value(...)
                 }),
             })
-        }))
+        })
+        self.assertTrue(result)
         self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
         self.assertEqual('metrics-server', result['name'])
         self.assertEqual(4443, result['port'])
 
     def test_syntactic_sugar_underscore(self):
-        self.assertTrue(result := match(sample_k8s_response, {
+        result = match(sample_k8s_response, {
             "containers": Each({
                 "image": _ >> 'image',
                 "name": _ >> 'name',
@@ -71,7 +75,8 @@ class CaptureTest(unittest.TestCase):
                     "containerPort": Value(...) >> 'port'
                 }),
             })
-        }))
+        })
+        self.assertTrue(result)
         self.assertEqual('k8s.gcr.io/metrics-server/metrics-server:v0.4.1', result['image'])
         self.assertEqual('metrics-server', result['name'])
         self.assertEqual(4443, result['port'])

@@ -34,7 +34,8 @@ def Case(pattern):
     if not isinstance(exc, TryMatch):
         raise TypeError
 
-    if result := exc.context.match(exc.value, pattern):
+    result = exc.context.match(exc.value, pattern)
+    if result:
         exc.result = result
         return TryMatch
     return NoMatch

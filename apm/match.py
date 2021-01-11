@@ -36,7 +36,8 @@ def match(value, pattern=NoValue, *extra, multimatch=True, strict=False, argresu
             acc.append(p)
             if len(acc) == 2:
                 condition, action = acc
-                if result := match(value, condition):
+                result = match(value, condition)
+                if result:
                     if callable(action):
                         return action(*result.wildcard_matches())
                     return action
