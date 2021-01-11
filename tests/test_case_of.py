@@ -7,6 +7,7 @@ from apm import *
 
 class CaseOfTest(unittest.TestCase):
 
+    # noinspection PyShadowingBuiltins
     def test_case_of(self):
         result = case({"Id": "h23ksad8", "Name": "ObjectName"}) \
             .of({"Id": Capture(Regex("[A-Z0-9]+"), name='id')}, lambda id: id) \

@@ -211,9 +211,11 @@ class ReadmeExamples(unittest.TestCase):
         def add(a: int, b: int):
             return a + b
 
+        # noinspection PyTypeChecker
         self.assertEqual("ab", add("a", "b"))
         self.assertEqual(3, add(1, 2))
 
+    # noinspection PyUnresolvedReferences
     def test_statement_example(self):
         try:
             match({'user': 'some-user-id', 'first_name': "Jane", 'last_name': "Doe"})
@@ -223,6 +225,7 @@ class ReadmeExamples(unittest.TestCase):
             user = f"#{result['user_id']}"
         except Default:
             user = "anonymous"
+        # noinspection PyUnboundLocalVariable
         self.assertEqual("Jane Doe", user)
 
     def test_contains(self):

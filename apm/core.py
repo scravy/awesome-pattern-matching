@@ -192,7 +192,7 @@ class String(Pattern):
 
 
 class Capture(Pattern):
-    def __init__(self, pattern, /, *, name):
+    def __init__(self, pattern, *, name):
         self._pattern = pattern
         self._name = name
 
@@ -212,7 +212,7 @@ class Capture(Pattern):
 
 
 class Some(Capturable):
-    def __init__(self, pattern, /, *,
+    def __init__(self, pattern, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
                  exactly: Optional[int] = None):
@@ -247,7 +247,7 @@ class Remaining(Some):
 
 
 class Strict(Pattern):
-    def __init__(self, pattern, /):
+    def __init__(self, pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -255,7 +255,7 @@ class Strict(Pattern):
 
 
 class Value(Pattern):
-    def __init__(self, value, /):
+    def __init__(self, value):
         self._value = value
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -308,7 +308,7 @@ class Either(Pattern):
 
 
 class Not(Pattern):
-    def __init__(self, pattern, /):
+    def __init__(self, pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:

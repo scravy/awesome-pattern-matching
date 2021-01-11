@@ -8,7 +8,7 @@ from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf
 
 
 class Check(Pattern):
-    def __init__(self, condition, /):
+    def __init__(self, condition):
         self._condition = condition
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -16,7 +16,7 @@ class Check(Pattern):
 
 
 class Regex(Pattern, StringPattern):
-    def __init__(self, regex, /):
+    def __init__(self, regex):
         self._regex: re.Pattern = re.compile(regex)
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -60,7 +60,7 @@ class Between(Pattern):
 
 
 class Length(Pattern):
-    def __init__(self, length=None, /, at_least: int = None, at_most: int = None):
+    def __init__(self, length=None, at_least: int = None, at_most: int = None):
         if length is not None:
             if at_least is not None or at_most is not None:
                 raise ValueError("If length is given, 'at_least' or 'at_most' must not be given.")
@@ -85,7 +85,7 @@ class Contains(Pattern):
 
 
 class Transformed(Pattern):
-    def __init__(self, f: Callable, pattern, /):
+    def __init__(self, f: Callable, pattern):
         self._f = f
         self._pattern = pattern
 
@@ -111,7 +111,7 @@ class Arguments(Pattern):
 
 
 class Returns(Pattern):
-    def __init__(self, pattern, /):
+    def __init__(self, pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
@@ -119,7 +119,7 @@ class Returns(Pattern):
 
 
 class Each(Pattern):
-    def __init__(self, pattern, /, *, at_least: int = 0):
+    def __init__(self, pattern, *, at_least: int = 0):
         self._pattern = pattern
         self._at_least = at_least
 
@@ -133,7 +133,7 @@ class Each(Pattern):
 
 
 class EachItem(Pattern):
-    def __init__(self, key_pattern, value_pattern, /):
+    def __init__(self, key_pattern, value_pattern):
         self._key_pattern = key_pattern
         self._value_pattern = value_pattern
 
@@ -147,7 +147,7 @@ class EachItem(Pattern):
 
 
 class At(Pattern):
-    def __init__(self, path, pattern, /):
+    def __init__(self, path, pattern):
         if isinstance(path, str):
             self._path = path.split(".")
         else:
