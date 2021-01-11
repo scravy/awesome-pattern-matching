@@ -307,6 +307,23 @@ you would want to use `_` which is an instance of Pattern. A useful convention i
 going to be captured, and `...` if the matching part is actually not of interest and to be ignored.
 
 
+## Support for dataclasses
+
+```python
+@dataclass
+class User:
+    first_name: str
+    last_name: str
+
+value = User("Jane", "Doe")
+
+if match(value, User(_, "Doe")):
+    print("Welcome, member of the Doe family!")
+elif match(value, User(_, _)):
+    print("Welcome, anyone!")
+```
+
+
 ## The different styles in detail
 
 ### Simple style
