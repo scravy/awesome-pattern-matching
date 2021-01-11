@@ -11,7 +11,7 @@ pip install awesome-pattern-matching
 - Extensible
 - Composable
 - Functional
-- Python 3.8+
+- Python 3.7+
 - Typed (IDE friendly)
 - Offers different styles (expression, declarative, statement, ...)
 
