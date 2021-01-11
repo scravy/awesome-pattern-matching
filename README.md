@@ -64,6 +64,7 @@ if match(f, Arguments(int, float) & Returns(int)):
 - [Strict vs non-strict matches](#strict-vs-non-strict-matches)
 - [Match head and tail of a list](#match-head-and-tail-of-a-list)
 - [Wildcard matches anything using `...` or `_`](#wildcard-matches-anything-using--or-_)
+- [Support for dataclasses](#support-for-dataclasses)
 - [The different styles in detail](#the-different-styles-in-detail)
   - [Simple style](#simple-style)
   - [Expression style](#expression-style)
