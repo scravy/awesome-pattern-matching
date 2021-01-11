@@ -351,5 +351,12 @@ class BasicUseCases(unittest.TestCase):
             first_name: str
             last_name: str
 
+        @dataclass
+        class LoggedInUser(User):
+            display_name: str
+
         self.assertTrue(result := match(User("Jane", "Doe"), User("Jane", _ >> 'last_name')))
+        self.assertEqual("Doe", result['last_name'])
+
+        self.assertTrue(result := match(LoggedInUser("John", "Doe", "johndoe"), User(_, _ >> 'last_name')))
         self.assertEqual("Doe", result['last_name'])

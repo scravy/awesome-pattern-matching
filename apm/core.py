@@ -57,6 +57,8 @@ class MatchContext:
             return pattern.match(value, ctx=self, strict=strict)
 
         if is_dataclass(value) and is_dataclass(pattern):
+            if not issubclass(type(value), type(pattern)):
+                return self.no_match()
             return _match_dict(value.__dict__, pattern.__dict__, ctx=self, strict=strict)
 
         if isinstance(pattern, dict):

@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import dataclass
 
 from apm import *
 
@@ -228,3 +229,19 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match("hello there, world", Contains("there")))
         self.assertTrue(match([1, 2, 3], Contains(2) & Contains(3)))
         self.assertTrue(match({'foo': 1, 'bar': 2}, Contains('quux') | Contains('bar')))
+
+    def test_dataclasses(self):
+        @dataclass
+        class User:
+            first_name: str
+            last_name: str
+
+        value = User("Jane", "Doe")
+
+        def check(v):
+            self.assertEqual("Welcome, member of the Doe family!", v)
+
+        if match(value, User(_, "Doe")):
+            check("Welcome, member of the Doe family!")
+        elif match(value, User(_, _)):
+            check("Welcome, anyone!")
