@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import dataclass
 from datetime import datetime
 
 from apm import *
@@ -343,3 +344,12 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(result := match({'a': 3, 'b': 5}, pattern))
         self.assertTrue('capture' in result)
         self.assertEqual(5, result['capture'])
+
+    def test_dataclasses(self):
+        @dataclass
+        class User:
+            first_name: str
+            last_name: str
+
+        self.assertTrue(result := match(User("Jane", "Doe"), User("Jane", _ >> 'last_name')))
+        self.assertEqual("Doe", result['last_name'])

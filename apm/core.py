@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Mapping  # pylint: disable=no-name-in-module
+from dataclasses import is_dataclass
 from itertools import chain
 from typing import Optional, List, Dict
 
@@ -54,6 +55,9 @@ class MatchContext:
 
         if isinstance(pattern, Pattern):
             return pattern.match(value, ctx=self, strict=strict)
+
+        if is_dataclass(value) and is_dataclass(pattern):
+            return _match_dict(value.__dict__, pattern.__dict__, ctx=self, strict=strict)
 
         if isinstance(pattern, dict):
             return _match_dict(value, pattern, ctx=self, strict=strict)
