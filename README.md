@@ -63,7 +63,8 @@ if match(f, Arguments(int, float) & Returns(int)):
 - [Multimatch](#multimatch)
 - [Strict vs non-strict matches](#strict-vs-non-strict-matches)
 - [Match head and tail of a list](#match-head-and-tail-of-a-list)
-- [Wildcard matches anything using `...` or `_`](#wildcard-matches-anything-using--or-_)
+- [Wildcard matches anything using `_`](#wildcard-matches-anything-using-_)
+- [Wildcard matches anything using `...`](#wildcard-matches-anything-using-)
 - [Support for dataclasses](#support-for-dataclasses)
 - [The different styles in detail](#the-different-styles-in-detail)
   - [Simple style](#simple-style)
@@ -292,21 +293,25 @@ The above example also showcases how `Remaining` can be made to match
 `at_least` _n_ number of items (`Each` also has an `at_least` keyword argument).
 
 
-## Wildcard matches anything using `...` or `_`
+## Wildcard matches anything using `_`
 
-A wildcard pattern can be expressed using `...`, the ellipsis object. An alternate, to some people more familiar syntax,
-is `_`. There is actually a difference between `...` and `_`. The ellipsis (`...`) is a native python type, whereas `_`
-is defined as `Value(...)`. That is: `_` is an instance of `Pattern`, whereas `...` is not.
+A wildcard pattern can be expressed using `_`. `_` is a `Pattern` and thus `>>` and `@` can be used with it.
 
 ```python
-# These are equivalent
 match([1, 2, 3, 4], [1, _, 3, _])
-match([1, 2, 3, 4], [1, ..., 3, ...])
 ```
 
-Since `...` is a plain python value none of `|`, `&`, `^`, `~`, '@', or `>>` are overloaded. If you want to capture
-you would want to use `_` which is an instance of Pattern. A useful convention is to use `_` if the matched piece is
-going to be captured, and `...` if the matching part is actually not of interest and to be ignored.
+
+## Wildcard matches anything using `...`
+
+The `Ellipsis` can be used as a wildcard match, too. It is however not a `Pattern` (so `|`, `&`, `@`, etc. can not
+be used on it). If you actually want to match `Ellipsis`, wrap it using `Value(...)`.
+
+Otherwise `...` is equivalent for most intents and purposes to `_`:
+
+```python
+match([1, 2, 3, 4], [1, ..., 3, ...])
+```
 
 
 ## Support for dataclasses

@@ -269,9 +269,6 @@ class Value(Pattern):
         self._value = value
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        if self._value is Ellipsis:
-            ctx.record(self, value)
-            return ctx.matches()
         if strict:
             if type(self._value) != type(value):
                 return ctx.no_match()
@@ -420,4 +417,10 @@ def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResu
         return ctx.match_if(not item_queued)
 
 
-_ = Value(...)
+class Underscore(Pattern):
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        ctx.record(self, value)
+        return ctx.matches()
+
+
+_ = Underscore()

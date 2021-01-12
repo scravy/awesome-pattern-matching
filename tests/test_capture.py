@@ -39,10 +39,10 @@ class CaptureTest(unittest.TestCase):
     def test_syntactic_sugar_rshift_operator(self):
         result = match(sample_k8s_response, {
             "containers": Each({
-                "image": Value(...) >> 'image',
-                "name": Value(...) >> 'name',
+                "image": _ >> 'image',
+                "name": _ >> 'name',
                 "ports": Each({
-                    "containerPort": Value(...) >> 'port'
+                    "containerPort": _ >> 'port'
                 }),
             })
         })
@@ -52,12 +52,13 @@ class CaptureTest(unittest.TestCase):
         self.assertEqual(4443, result['port'])
 
     def test_syntactic_sugar_rmatmul_operator(self):
+        # noinspection PyUnresolvedReferences
         result = match(sample_k8s_response, {
             "containers": Each({
-                "image": 'image' @ Value(...),
-                "name": 'name' @ Value(...),
+                "image": 'image' @ _,
+                "name": 'name' @ _,
                 "ports": Each({
-                    "containerPort": 'port' @ Value(...)
+                    "containerPort": 'port' @ _
                 }),
             })
         })
@@ -72,7 +73,7 @@ class CaptureTest(unittest.TestCase):
                 "image": _ >> 'image',
                 "name": _ >> 'name',
                 "ports": Each({
-                    "containerPort": Value(...) >> 'port'
+                    "containerPort": _ >> 'port'
                 }),
             })
         })
