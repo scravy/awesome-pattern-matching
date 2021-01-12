@@ -1,6 +1,8 @@
 # Awesome Pattern Matching (_apm_) for Python
 
-[![Github Actions](https://github.com/scravy/awesome-pattern-matching/workflows/Python%20application/badge.svg)](https://github.com/scravy/awesome-pattern-matching/actions) [![Downloads](https://pepy.tech/badge/awesome-pattern-matching)](https://pepy.tech/project/awesome-pattern-matching) [![PyPI version](https://badge.fury.io/py/awesome-pattern-matching.svg)](https://pypi.org/project/awesome-pattern-matching/)
+[![Github Actions](https://github.com/scravy/awesome-pattern-matching/workflows/Python%20application/badge.svg)](https://github.com/scravy/awesome-pattern-matching/actions)
+[![Downloads](https://pepy.tech/badge/awesome-pattern-matching)](https://pepy.tech/project/awesome-pattern-matching)
+[![PyPI version](https://badge.fury.io/py/awesome-pattern-matching.svg)](https://pypi.org/project/awesome-pattern-matching/)
 
 ```bash
 pip install awesome-pattern-matching
