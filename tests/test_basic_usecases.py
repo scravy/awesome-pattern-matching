@@ -37,9 +37,9 @@ class BasicUseCases(unittest.TestCase):
         self.assertFalse(match(1, Strict(1.0)))
 
     def test_truish(self):
-        self.assertTrue(match(1, Truish()))
-        self.assertTrue(match(2.9, Truish()))
-        self.assertFalse(match("", Truish()))
+        self.assertTrue(match(1, IsTruish))
+        self.assertTrue(match(2.9, IsTruish))
+        self.assertFalse(match("", IsTruish))
 
     def test_length(self):
         self.assertTrue(match([], Length(0)))

@@ -176,11 +176,12 @@ class Object(Pattern):
         return ctx.match(value, self._items, strict=strict)
 
 
-class Truish(Pattern):
-    """Deprecated, use IsTruish"""
-
+class _IsTruish(Pattern):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match_if(value)
+
+
+IsTruish = _IsTruish()
 
 
 # noinspection PyPep8Naming
@@ -193,6 +194,5 @@ def Maybe(pattern) -> Pattern:
     return OneOf(pattern, ...)
 
 
-IsTruish = Truish
 IsNumber = (InstanceOf(int) & ~InstanceOf(bool)) | InstanceOf(float) | InstanceOf(decimal.Decimal)
 IsString = InstanceOf(str)

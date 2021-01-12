@@ -36,8 +36,7 @@ from .patterns import \
     Object, \
     Regex, \
     Returns, \
-    Transformed, \
-    Truish
+    Transformed
 from .try_match import Case, Default
 
 __all__ = [
@@ -83,5 +82,4 @@ __all__ = [
     'Regex',
     'Returns',
     'Transformed',
-    'Truish',
 ]
