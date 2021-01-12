@@ -124,6 +124,13 @@ class MatchResult(Mapping):
     def wildcard_matches(self) -> List:
         return self._wildcard_matches
 
+    def bind(self, target, keeplist=False) -> MatchResult:
+        for k, v in self.items():
+            if self._context.multimatch and len(v) == 1 and not keeplist:
+                v = v[0]
+            target[k] = v
+        return self
+
 
 class Capturable:
     def __rshift__(self, other):

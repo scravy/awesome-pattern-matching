@@ -371,3 +371,9 @@ class BasicUseCases(unittest.TestCase):
         result = match(LoggedInUser("John", "Doe", "johndoe"), User(_, _ >> 'last_name'))
         self.assertTrue(result)
         self.assertEqual("Doe", result['last_name'])
+
+    def test_bind(self):
+        result = {}
+        if match({'a': 1, 'b': 2}, {'a': _ >> 'foo'}).bind(result):
+            self.assertEqual(1, result['foo'])
+        self.assertEqual({'foo': 1}, result)

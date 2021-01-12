@@ -67,6 +67,7 @@ if match(f, Arguments(int, float) & Returns(int)):
 - [Support for dataclasses](#support-for-dataclasses)
 - [The different styles in detail](#the-different-styles-in-detail)
   - [Simple style](#simple-style)
+    - [pre `:=` version (Python 3.7)](#pre--version-python-37)
   - [Expression style](#expression-style)
   - [Statement style](#statement-style)
   - [Declarative style](#declarative-style)
@@ -113,7 +114,7 @@ elif match(value, Between(11, 20)):
     print("It's between 11 and 20")
 else:
     print("It's not between 1 and 20")
-
+    
 # The expression style
 case(value) \
     .of(Between(1, 10), lambda: print("It's between 1 and 10")) \
@@ -344,6 +345,21 @@ if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
     print(result['value'])  # ["foo", "bar"]
 ```
 
+#### pre `:=` version (Python 3.7)
+
+`bind()` can be used on a `MatchResult` to bind the matched items to an existing dictionary.
+
+```python
+from apm import *
+
+value = {"a": 7, "b": "foo", "c": "bar"}
+
+result = {}
+if match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)).bind(result):
+    print(result['value'])  # ["foo", "bar"]
+elif match(value, {"quux": _ >> 'quux'}).bind(result):
+    print(result['quux'])
+```
 
 ### Expression style
 
