@@ -16,17 +16,27 @@ class Check(Pattern):
 
 
 class Regex(Pattern, StringPattern):
-    def __init__(self, regex):
+    def __init__(self, regex, *, bind_groups: bool = True):
         self._regex: re.Pattern = re.compile(regex)
+        self._bind_groups = bind_groups
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match_if(bool(self._regex.fullmatch(value)))
+        result = self._regex.fullmatch(value)
+        if not result:
+            return ctx.no_match()
+        if self._bind_groups:
+            for k, v in result.groupdict().items():
+                ctx[k] = v
+        return ctx.matches()
 
     def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:
         result = self._regex.match(remaining)
-        if result:
-            return result.group(0)
-        return None
+        if not result:
+            return None
+        if self._bind_groups:
+            for k, v in result.groupdict():
+                ctx[k] = v
+        return result.group(0)
 
     @property
     def regex(self) -> re.Pattern:
