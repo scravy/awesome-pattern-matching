@@ -641,13 +641,23 @@ match("abc", Length(at_least=2, at_most=4))
 
 ### `Contains(item)`
 
-Matches an object if it contains the given item.
+Matches an object if it contains the given item (as per the same logic as the `in` operator).
 
 ```python
 match("hello there, world", Contains("there"))
 match([1, 2, 3], Contains(2) & Contains(3))
 match({'foo': 1, 'bar': 2}, Contains('quux') | Contains('bar'))
 ```
+
+
+### `Regex(regex_pattern, bind_groups: bool = False)`
+
+Matches a string if it completely matches the given regex, as per `re.fullmatch`.
+If the regular expression pattern contains named capturing groups and `bind_groups` is set to `True`,
+this pattern will bind the captured results in the `MatchResult`.
+
+To mimic `re.match` or `re.search` the given regular expression `x` can be augmented as `x.*` or `.*x.*`
+respectively.
 
 
 ### `Check(predicate)`
