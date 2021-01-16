@@ -82,6 +82,14 @@ class CaptureTest(unittest.TestCase):
         self.assertEqual('metrics-server', result['name'])
         self.assertEqual(4443, result['port'])
 
+    def test_regex_bind_groups(self):
+        result = match("abcdef", Regex(r"(?P<one>[a-c]+)(?P<two>[a-z]+)", bind_groups=True))
+        self.assertTrue(result)
+        self.assertEqual(result['one'], 'abc')
+        self.assertEqual(result['two'], 'def')
+        self.assertEqual(result.one, 'abc')
+        self.assertEqual(result.two, 'def')
+
 
 sample_k8s_response = {
     "containers": [

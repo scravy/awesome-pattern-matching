@@ -279,7 +279,7 @@ class BasicUseCases(unittest.TestCase):
             "bar=",
             Capture(Regex("[^=/]+"), name="bar"),
             Regex("/*"),
-        ), argresult=True)
+        ))
         self.assertTrue(result)
         self.assertEqual("https", result.protocol)
         self.assertEqual("somehost", result.host)

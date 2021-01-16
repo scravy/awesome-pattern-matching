@@ -330,25 +330,41 @@ class Not(Pattern):
         return ctx.matches()
 
 
-def _match_dict(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
+def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
+    to_be_matched = {}
     try:
         items = value.items()
     except (AttributeError, TypeError):
         return ctx.no_match()
-    matched_keys = set()
     for key, value in items:
-        if key in pattern:
-            result = ctx.match(value, pattern[key])
-            if not result:
-                return result
-            matched_keys.add(key)
-        else:
-            if strict:
-                return ctx.no_match()
-    for key in pattern:
-        if key not in matched_keys:
+        to_be_matched[key] = value
+    patterns = []
+    for key, pattern in pattern.items():
+        if isinstance(key, Pattern):
+            patterns.append((key, pattern))
+            continue
+        try:
+            value = to_be_matched[key]
+        except KeyError:
             return ctx.no_match()
-    return ctx.matches()
+        result = ctx.match(value, pattern)
+        if not result:
+            return result
+        del to_be_matched[key]
+    possibly_mismatching_keys = set()
+    for key_pattern, pattern in patterns:
+        keys_to_remove = []
+        for key, value in to_be_matched.items():
+            if ctx.match(key, key_pattern):
+                if ctx.match(value, pattern):
+                    keys_to_remove.append(key)
+                    if key in possibly_mismatching_keys:
+                        possibly_mismatching_keys.remove(key)
+                else:
+                    possibly_mismatching_keys.add(key)
+        for key in keys_to_remove:
+            del to_be_matched[key]
+    return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
 def _match_tuple(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
