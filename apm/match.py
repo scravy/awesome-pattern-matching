@@ -1,15 +1,18 @@
+import re
 from itertools import chain
 from typing import Union, Any
 
-from .core import MatchResult, MatchContext, transform, _, Underscore, AllOf
+from .core import MatchResult, MatchContext, transform, _, Underscore
 from .no_value import NoValue
-from .patterns import InstanceOf
+from .patterns import InstanceOf, Regex
 from .try_match import TryMatch
 
 
 def _autopattern(pattern):
     if isinstance(pattern, type):
         return InstanceOf(pattern) & Underscore()
+    if isinstance(pattern, re.Pattern):
+        return Regex(pattern, capture_wildcards=True, bind_groups=False)
     if pattern is _:
         return Underscore()
     return pattern

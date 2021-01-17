@@ -4,7 +4,7 @@ import re
 from typing import Callable, Optional, Dict, Any
 
 from ._util import get_arg_types, get_return_type, get_kwarg_types
-from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf, Nested
+from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf, Nested, Underscore
 
 
 class Check(Pattern):
@@ -16,9 +16,13 @@ class Check(Pattern):
 
 
 class Regex(Pattern, StringPattern):
-    def __init__(self, regex, *, bind_groups: bool = True):
+    def __init__(self, regex, *, bind_groups: bool = True, capture_wildcards: bool = False):
         self._regex: re.Pattern = re.compile(regex)
         self._bind_groups = bind_groups
+        if capture_wildcards:
+            self._wildcards = [Underscore() for _i in range(0, self._regex.groups)]
+        else:
+            self._wildcards = []
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         result = self._regex.fullmatch(value)
@@ -27,6 +31,8 @@ class Regex(Pattern, StringPattern):
         if self._bind_groups:
             for k, v in result.groupdict().items():
                 ctx[k] = v
+        for ix, wc in enumerate(self._wildcards):
+            ctx.record(wc, result.group(ix + 1))
         return ctx.matches()
 
     def string_match(self, remaining, *, ctx: MatchContext) -> Optional[str]:

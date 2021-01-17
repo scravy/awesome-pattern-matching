@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from dataclasses import dataclass
 
@@ -101,3 +102,16 @@ class ComplexMatchTest(unittest.TestCase):
                            _, "anything else"
                            )
             self.assertEqual(expected, result)
+
+    def test_regex(self):
+        def what_is(pet):
+            return match(pet,
+                         re.compile(r'(\w+)-(\w+)-cat$'), lambda name, my: 'cat ' + name,
+                         re.compile(r'(\w+)-(\w+)-dog$'), lambda name, my: 'dog ' + name,
+                         _, "something else"
+                         )
+
+        self.assertEqual('dog fuffy', what_is('fuffy-my-dog'))
+        self.assertEqual('dog puffy', what_is('puffy-her-dog'))
+        self.assertEqual('cat carla', what_is('carla-your-cat'))
+        self.assertEqual('something else', what_is('roger-my-hamster'))
