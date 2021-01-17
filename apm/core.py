@@ -71,10 +71,14 @@ class MatchContext:
             return _match_dict(value, pattern, ctx=self, strict=strict)
 
         if isinstance(pattern, tuple):
-            return _match_tuple(value, pattern, ctx=self, strict=strict)
+            if not isinstance(value, tuple) or strict and type(value) != tuple:
+                return self.no_match()
+            return _match_sequence(value, pattern, ctx=self, strict=strict)
 
         if isinstance(pattern, list):
-            return _match_list(value, pattern, ctx=self, strict=strict)
+            if strict and type(value) != list:
+                return self.no_match()
+            return _match_sequence(value, pattern, ctx=self, strict=strict)
 
         return self.no_match()
 
@@ -437,21 +441,7 @@ def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> Mat
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
-def _match_tuple(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
-    if strict and type(value) != tuple:
-        return ctx.no_match()
-    if not isinstance(value, tuple) or len(pattern) != len(value):
-        return ctx.no_match()
-    for p, v in zip(pattern, value):
-        result = ctx.match(v, p)
-        if not result:
-            return result
-    return ctx.matches()
-
-
-def _match_list(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
-    if strict and type(value) != list:
-        return ctx.no_match()
+def _match_sequence(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
     try:
         it = iter(value)
     except TypeError:
