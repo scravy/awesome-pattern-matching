@@ -4,7 +4,7 @@ import re
 from typing import Callable, Optional, Dict, Any
 
 from ._util import get_arg_types, get_return_type, get_kwarg_types
-from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf
+from .core import Pattern, MatchContext, MatchResult, StringPattern, OneOf, Nested
 
 
 class Check(Pattern):
@@ -95,7 +95,7 @@ class Contains(Pattern):
         return ctx.match_if(self._needle in value)
 
 
-class Transformed(Pattern):
+class Transformed(Pattern, Nested):
     def __init__(self, f: Callable, pattern):
         self._f = f
         self._pattern = pattern
@@ -108,8 +108,11 @@ class Transformed(Pattern):
             return ctx.no_match()
         return ctx.match(transformed, self._pattern)
 
+    def descend(self, f):
+        return Transformed(f=self._f, pattern=f(self._pattern))
 
-class Arguments(Pattern):
+
+class Arguments(Pattern, Nested):
     def __init__(self, *arg_patterns, **kwargs):
         self._pattern = list(arg_patterns)
         self._kwargs: Dict[str, Any] = kwargs
@@ -121,16 +124,26 @@ class Arguments(Pattern):
                 return result
         return ctx.match(get_kwarg_types(value), self._kwargs, strict)
 
+    def descend(self, f):
+        t_pattern = list(f(p) for p in self._pattern)
+        t_kwargs = {}
+        for k, v in self._kwargs.items():
+            t_kwargs[k] = f(v)
+        return Arguments(*t_pattern, **t_kwargs)
 
-class Returns(Pattern):
+
+class Returns(Pattern, Nested):
     def __init__(self, pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match(get_return_type(value), self._pattern)
 
+    def descend(self, f):
+        return Returns(pattern=f(self._pattern))
 
-class Each(Pattern):
+
+class Each(Pattern, Nested):
     def __init__(self, pattern, *, at_least: int = 0):
         self._pattern = pattern
         self._at_least = at_least
@@ -144,8 +157,11 @@ class Each(Pattern):
             count += 1
         return ctx.match_if(count >= self._at_least)
 
+    def descend(self, f):
+        return Each(pattern=f(self._pattern), at_least=self._at_least)
 
-class EachItem(Pattern):
+
+class EachItem(Pattern, Nested):
     def __init__(self, key_pattern, value_pattern):
         self._key_pattern = key_pattern
         self._value_pattern = value_pattern
@@ -160,8 +176,11 @@ class EachItem(Pattern):
                 return result
         return ctx.matches()
 
+    def descend(self, f):
+        return EachItem(key_pattern=f(self._key_pattern), value_pattern=f(self._value_pattern))
 
-class At(Pattern):
+
+class At(Pattern, Nested):
     def __init__(self, path, pattern):
         if isinstance(path, str):
             self._path = path.split(".")
@@ -177,13 +196,22 @@ class At(Pattern):
                 return ctx.no_match()
         return ctx.match(value, self._pattern)
 
+    def descend(self, f):
+        return At(path=self._path, pattern=f(self._pattern))
 
-class Object(Pattern):
+
+class Object(Pattern, Nested):
     def __init__(self, **kwargs):
         self._items = kwargs
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match(value, self._items, strict=strict)
+
+    def descend(self, f):
+        items = {}
+        for k, v in self._items.items():
+            items[k] = f(v)
+        return Object(**items)
 
 
 class _IsTruish(Pattern):

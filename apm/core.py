@@ -138,6 +138,29 @@ class Capturable:
         return Capture(self, name=other)
 
 
+class Nested:
+    def descend(self, f):
+        raise NotImplementedError
+
+
+def transform(pattern, f):
+    def rf(p):
+        return transform(p, f)
+
+    if isinstance(pattern, Nested):
+        return f(pattern.descend(rf))
+    if isinstance(pattern, dict):
+        kvs = {}
+        for k, v in pattern.items():
+            kvs[rf(k)] = rf(v)
+        return f(kvs)
+    if isinstance(pattern, tuple):
+        return f(tuple(rf(i) for i in pattern))
+    if isinstance(pattern, list):
+        return f(list(rf(i) for i in pattern))
+    return f(pattern)
+
+
 class Pattern(Capturable):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         raise NotImplementedError
@@ -162,7 +185,7 @@ class StringPattern:
         raise NotImplementedError
 
 
-class String(Pattern):
+class String(Pattern, Nested):
     """Experimental"""
 
     def __init__(self, *patterns):
@@ -197,8 +220,11 @@ class String(Pattern):
                 return ctx.no_match()
         return ctx.match_if(not remaining)
 
+    def descend(self, f):
+        return String(*(f(p) for p in self._patterns))
 
-class Capture(Pattern):
+
+class Capture(Pattern, Nested):
     def __init__(self, pattern, *, name):
         self._pattern = pattern
         self._name = name
@@ -210,6 +236,9 @@ class Capture(Pattern):
             return result
         return ctx.no_match()
 
+    def descend(self, f):
+        return Capture(pattern=f(self._pattern), name=self._name)
+
     @property
     def pattern(self):
         return self._pattern
@@ -219,7 +248,7 @@ class Capture(Pattern):
         return self._name
 
 
-class Some(Capturable):
+class Some(Capturable, Nested):
     def __init__(self, pattern, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
@@ -249,17 +278,23 @@ class Some(Capturable):
             return count >= self.at_least
         return True
 
+    def descend(self, f):
+        return Some(pattern=f(self.pattern), at_least=self.at_least, at_most=self.at_most)
+
 
 class Remaining(Some):
     pass
 
 
-class Strict(Pattern):
+class Strict(Pattern, Nested):
     def __init__(self, pattern):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match(value, self._pattern, strict=True)
+
+    def descend(self, f):
+        return Strict(pattern=f(self._pattern))
 
 
 class Value(Pattern):
@@ -273,7 +308,7 @@ class Value(Pattern):
         return ctx.match_if(self._value == value)
 
 
-class OneOf(Pattern, StringPattern):
+class OneOf(Pattern, StringPattern, Nested):
     def __init__(self, *patterns):
         self._patterns = patterns
 
@@ -291,8 +326,11 @@ class OneOf(Pattern, StringPattern):
                 return result
         return None
 
+    def descend(self, f):
+        return OneOf(*(f(p) for p in self._patterns))
 
-class AllOf(Pattern):
+
+class AllOf(Pattern, Nested):
     def __init__(self, *patterns):
         self._patterns = patterns
 
@@ -303,8 +341,11 @@ class AllOf(Pattern):
                 return result
         return ctx.matches()
 
+    def descend(self, f):
+        return AllOf(*(f(p) for p in self._patterns))
 
-class Either(Pattern):
+
+class Either(Pattern, Nested):
     def __init__(self, left, right):
         self._left = left
         self._right = right
@@ -314,8 +355,11 @@ class Either(Pattern):
         match_right = ctx.match(value, self._right, strict=strict)
         return ctx.match_if(bool(match_left) != bool(match_right))
 
+    def descend(self, f):
+        return Either(f(self._left), f(self._right))
 
-class Not(Pattern):
+
+class Not(Pattern, Nested):
     def __init__(self, pattern):
         self._pattern = pattern
 
@@ -323,6 +367,9 @@ class Not(Pattern):
         if ctx.match(value, self._pattern, strict=False):
             return ctx.no_match()
         return ctx.matches()
+
+    def descend(self, f):
+        return Not(pattern=f(self._pattern))
 
 
 def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
