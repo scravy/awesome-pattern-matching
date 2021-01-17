@@ -6,3 +6,4 @@ build/
 /htmlcov/
 .DS_Store
 /.coverage
+/coverage.txt
