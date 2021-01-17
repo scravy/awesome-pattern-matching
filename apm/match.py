@@ -1,9 +1,24 @@
 from itertools import chain
 from typing import Union, Any
 
-from .core import MatchResult, MatchContext
-from .try_match import TryMatch
+from .core import MatchResult, MatchContext, transform, _, Underscore
 from .no_value import NoValue
+from .patterns import InstanceOf
+from .try_match import TryMatch
+
+
+def _autopattern(pattern):
+    if isinstance(pattern, type):
+        return InstanceOf(pattern)
+    if isinstance(pattern, tuple) and all(isinstance(i, type) for i in pattern):
+        return InstanceOf(*pattern)
+    if pattern is _:
+        return Underscore()
+    return pattern
+
+
+class MatchError(Exception):
+    pass
 
 
 def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Union[MatchResult, Any]:
@@ -16,7 +31,7 @@ def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Uni
     elif extra:
         acc = []
         for p in chain((pattern,), extra):
-            acc.append(p)
+            acc.append(transform(p, _autopattern))
             if len(acc) == 2:
                 condition, action = acc
                 result = match(value, condition)
@@ -25,5 +40,8 @@ def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Uni
                         return action(*result.wildcard_matches())
                     return action
                 acc = []
+        if len(acc) == 1:
+            return acc[0]
+        raise MatchError(value)
     result = ctx.match(value, pattern, strict=strict)
     return result

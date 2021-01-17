@@ -53,10 +53,19 @@ class MatchContext:
         if isinstance(pattern, Pattern):
             return pattern.match(value, ctx=self, strict=strict)
 
-        if is_dataclass(value) and is_dataclass(pattern):
-            if not issubclass(type(value), type(pattern)):
+        if is_dataclass(value):
+            if is_dataclass(pattern):
+                pattern_type = type(pattern)
+                pattern_dict = pattern.__dict__
+            elif isinstance(pattern, Dataclass):
+                pattern_type = pattern.type
+                pattern_dict = pattern.dict
+            else:
                 return self.no_match()
-            return _match_dict(value.__dict__, pattern.__dict__, ctx=self, strict=strict)
+
+            if not issubclass(type(value), pattern_type):
+                return self.no_match()
+            return _match_dict(value.__dict__, pattern_dict, ctx=self, strict=strict)
 
         if isinstance(pattern, dict):
             return _match_dict(value, pattern, ctx=self, strict=strict)
@@ -143,9 +152,24 @@ class Nested:
         raise NotImplementedError
 
 
+class Dataclass(Nested):
+    def __init__(self, type_: type, dict_: dict):
+        self.type = type_
+        self.dict = dict_
+
+    def descend(self, f):
+        dict_ = {}
+        for k, v in self.dict.items():
+            dict_[k] = f(v)
+        return Dataclass(self.type, dict_)
+
+
 def transform(pattern, f):
     def rf(p):
         return transform(p, f)
+
+    if is_dataclass(pattern):
+        pattern = Dataclass(type(pattern), pattern.__dict__)
 
     if isinstance(pattern, Nested):
         return f(pattern.descend(rf))
@@ -378,31 +402,31 @@ def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> Mat
         items = value.items()
     except (AttributeError, TypeError):
         return ctx.no_match()
-    for key, value in items:
-        to_be_matched[key] = value
+    for key, val in items:
+        to_be_matched[key] = val
     patterns = []
-    for key, pattern in pattern.items():
+    for key, val_pattern in pattern.items():
         if isinstance(key, Pattern):
-            patterns.append((key, pattern))
+            patterns.append((key, val_pattern))
             continue
         try:
-            value = to_be_matched[key]
+            val = to_be_matched[key]
         except KeyError:
             return ctx.no_match()
-        result = ctx.match(value, pattern)
+        result = ctx.match(val, val_pattern)
         if not result:
             return result
         del to_be_matched[key]
     possibly_mismatching_keys = set()
-    for key_pattern, pattern in patterns:
+    for key_pattern, val_pattern in patterns:
         keys_to_remove = []
-        for key, value in to_be_matched.items():
+        for key, val in to_be_matched.items():
             if ctx.match(key, key_pattern):
-                if ctx.match(value, pattern):
+                if ctx.match(val, val_pattern):
                     keys_to_remove.append(key)
                     if key in possibly_mismatching_keys:
                         possibly_mismatching_keys.remove(key)
-                else:
+                elif not isinstance(key_pattern, Underscore):
                     possibly_mismatching_keys.add(key)
         for key in keys_to_remove:
             del to_be_matched[key]
