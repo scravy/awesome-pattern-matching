@@ -264,7 +264,6 @@ class BasicUseCases(unittest.TestCase):
         self.assertEqual("1", result['foo'])
         self.assertEqual("2", result['bar'])
 
-    # noinspection PyUnresolvedReferences
     def test_string_argresult(self):
         path = "https://somehost/foo=1/bar=2/"
 
@@ -278,6 +277,27 @@ class BasicUseCases(unittest.TestCase):
             "/",
             "bar=",
             Capture(Regex("[^=/]+"), name="bar"),
+            Regex("/*"),
+        ))
+        self.assertTrue(result)
+        self.assertEqual("https", result.protocol)
+        self.assertEqual("somehost", result.host)
+        self.assertEqual("1", result.foo)
+        self.assertEqual("2", result.bar)
+
+    def test_string_with_at_capture(self):
+        path = "https://somehost/foo=1/bar=2/"
+
+        result = match(path, String(
+            'protocol' @ OneOf("https", "http"),
+            "://",
+            'host' @ Regex("[a-zA-Z_-]+"),
+            Regex("/+"),
+            "foo=",
+            'foo' @ Regex("[^=/]+"),
+            "/",
+            "bar=",
+            'bar' @ Regex("[^=/]+"),
             Regex("/*"),
         ))
         self.assertTrue(result)
