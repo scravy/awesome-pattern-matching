@@ -43,31 +43,31 @@ class TerseStyleTest(unittest.TestCase):
         )
 
     def test_match_class_hierarchies(self):
-        class Pet:
+        class Animal:
             pass
 
-        class Dog(Pet):
+        class Hippo(Animal):
             pass
 
-        class Cat(Pet):
+        class Zebra(Animal):
             pass
 
-        class Hamster(Pet):
+        class Horse(Animal):
             pass
 
         def what_is(x):
             return match(x,
-                         Dog, 'dog',
-                         Cat, 'cat',
-                         Pet, 'any other pet',
-                         _, 'this is not a pet at all',
+                         Hippo, 'hippo',
+                         Zebra, 'zebra',
+                         Animal, 'some other animal',
+                         _, 'not at all an animal',
                          )
 
-        self.assertEqual('cat', what_is(Cat()))
-        self.assertEqual('dog', what_is(Dog()))
-        self.assertEqual('any other pet', what_is(Hamster()))
-        self.assertEqual('any other pet', what_is(Pet()))
-        self.assertEqual('this is not a pet at all', what_is(42))
+        self.assertEqual('zebra', what_is(Zebra()))
+        self.assertEqual('hippo', what_is(Hippo()))
+        self.assertEqual('some other animal', what_is(Horse()))
+        self.assertEqual('some other animal', what_is(Animal()))
+        self.assertEqual('not at all an animal', what_is(42))
 
     def test_dataclasses(self):
         @dataclass
@@ -117,5 +117,10 @@ class TerseStyleTest(unittest.TestCase):
         self.assertEqual('something else', what_is('roger-my-hamster'))
 
     def test_lambda_with_too_little_parameters(self):
-        match(1,
-              _, lambda: "anything")
+        self.assertEqual("anything", match(1, _, lambda: "anything"))
+
+    def test_default_value(self):
+        self.assertEqual("fallback", match(1, 2, lambda: "something", "fallback"))
+
+    def test_default_action(self):
+        self.assertEqual("fallback", match(1, 2, lambda: "something", lambda: "fallback"))
