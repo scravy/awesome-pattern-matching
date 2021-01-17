@@ -3,10 +3,7 @@ from typing import Union, Any
 
 from .core import MatchResult, MatchContext
 from .try_match import TryMatch
-
-
-class NoValue:
-    pass
+from .no_value import NoValue
 
 
 def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Union[MatchResult, Any]:
