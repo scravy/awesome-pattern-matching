@@ -1,6 +1,12 @@
 test: lint
 	python3 -m unittest -v
 
+coverage:
+	rm .coverage
+	coverage run --source=apm -m unittest discover
+	coverage report | tee coverage.txt
+	coverage html
+
 lint:
 	pylint --disable=C,R,W apm
 
