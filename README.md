@@ -88,6 +88,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Between(lower, upper)`](#betweenlower-upper)
   - [`Length(length)`](#lengthlength)
   - [`Contains(item)`](#containsitem)
+  - [`Regex(regex_pattern, bind_groups: bool = False)`](#regexregex_pattern-bind_groups-bool--false)
   - [`Check(predicate)`](#checkpredicate)
   - [`InstanceOf(*types)`](#instanceoftypes)
   - [`SubclassOf(*types)`](#subclassoftypes)
