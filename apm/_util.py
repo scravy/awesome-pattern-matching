@@ -1,7 +1,7 @@
 import inspect
 from inspect import CO_VARARGS  # pylint: disable=no-name-in-module
 from types import CodeType
-from typing import List, Optional, Type, get_type_hints, Dict
+from typing import List, Optional, Type, get_type_hints, Dict, Union, Mapping, Iterable
 
 
 def get_arg_types(obj) -> List[Optional[Type]]:
@@ -53,11 +53,15 @@ def get_return_type(obj) -> Optional[Type]:
     return None
 
 
-def invoke(func, args):
+def invoke(func, args: Union[Mapping, Iterable]):
     code: CodeType = func.__code__
     argcount = code.co_argcount
     actual_args = []
-    for _, name in zip(range(0, argcount), code.co_varnames):
-        arg = args[name] if name in args else None
-        actual_args.append(arg)
+    if isinstance(args, Mapping):
+        for _, name in zip(range(0, argcount), code.co_varnames):
+            arg = args[name] if name in args else None
+            actual_args.append(arg)
+    else:
+        for _, arg in zip(range(0, argcount), args):
+            actual_args.append(arg)
     return func(*actual_args)

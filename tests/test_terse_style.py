@@ -115,3 +115,7 @@ class TerseStyleTest(unittest.TestCase):
         self.assertEqual('dog puffy', what_is('puffy-her-dog'))
         self.assertEqual('cat carla', what_is('carla-your-cat'))
         self.assertEqual('something else', what_is('roger-my-hamster'))
+
+    def test_lambda_with_too_little_parameters(self):
+        match(1,
+              _, lambda: "anything")

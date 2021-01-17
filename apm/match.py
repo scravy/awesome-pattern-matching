@@ -7,6 +7,7 @@ from .error import MatchError
 from .no_value import NoValue
 from .patterns import InstanceOf, Regex
 from .try_match import TryMatch
+from ._util import invoke
 
 
 def _autopattern(pattern):
@@ -70,12 +71,12 @@ def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Uni
                 result = match(value, condition)
                 if result:
                     if callable(action):
-                        return action(*result.wildcard_matches())
+                        return invoke(action, result.wildcard_matches())
                     return action
                 acc = []
         if len(acc) == 1:
             if callable(acc[0]):
-                return acc[0]()
+                return invoke(acc[0], [])
             return acc[0]
         raise MatchError(value)
     result = ctx.match(value, pattern, strict=strict)
