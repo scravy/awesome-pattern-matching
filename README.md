@@ -150,7 +150,7 @@ def f(n):
 
 f(value)
 
-# pampy style
+# terse (pampy) style
 match(value,
       Between( 1, 10), lambda: print("It's between 1 and 10"),
       Between(11, 20), lambda: print("It's between 11 and 20"),
@@ -454,6 +454,48 @@ def add(a: int, b: int):
 
 add("a", "b")
 add(1, 2)
+```
+
+### Terse style
+
+As the name indicates the "terse" style is terse. It is inspired by the `pampy`
+pattern matching library and mimics some of its behavior. Despite a slim surface
+area it also comes with some simplifications:
+
+- A type given as a pattern is matched against as if it was wrapped in an `InstanceOf`
+- `re.Pattern` objects (result of `re.compile`) are matched against as if it was given via `Regex`
+- Captures are passed to actions in the same order as they occur in the pattern (not by name)
+  
+```python
+from apm import *
+
+def fibonacci(n):
+  return match(n,
+               1, 1,
+               2, 1,
+               _, lambda x: fibonacci(x - 1) + fibonacci(x - 2)
+               )
+
+fibonacci(6)  # -> 8 
+
+
+class Animal:        pass
+class Hippo(Animal): pass
+class Zebra(Animal): pass
+class Horse(Animal): pass
+
+def what_am_i(x):
+  return match(x,
+               Hippo,  'hippopotamus',
+               Zebra,  'zebra',
+               Animal, 'some other animal',
+               _,      'not at all an animal',
+               )
+
+what_am_i(Hippo())  # -> 'hippopotamus'
+what_am_i(Zebra())  # -> 'zebra'
+what_am_i(Horse())  # -> 'some other animal'
+what_am_i(42)       # -> 'not at all an animal'
 ```
 
 

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from apm import *
 
 
-class ComplexMatchTest(unittest.TestCase):
+class TerseStyleTest(unittest.TestCase):
 
     def test_fibonacci(self):
         def fibonacci(n):
