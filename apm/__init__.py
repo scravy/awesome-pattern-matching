@@ -16,6 +16,7 @@ from .core import \
     StringPattern, \
     Value, \
     _
+from .error import MatchError
 from .match import match
 from .overload import case_distinction, Match
 from .patterns import \
@@ -61,6 +62,7 @@ __all__ = [
     'match',
     'case_distinction',
     'Match',
+    'MatchError',
     'Case',
     'Default',
 

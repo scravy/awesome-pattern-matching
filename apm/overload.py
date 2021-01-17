@@ -1,9 +1,9 @@
 import inspect
+import typing
 from typing import Callable, Dict, List
 
-import typing
-
-from apm.match import match
+from .error import MatchError
+from .match import match
 
 
 class Match:
@@ -17,10 +17,6 @@ class Match:
     def __call__(self):
         # typing.get_type_hints requires annotations to be callable, otherwise it bombs out with a TypeError
         return self
-
-
-class NoMatchError(Exception):
-    pass
 
 
 # noinspection PyDefaultArgument
@@ -59,7 +55,7 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
             if not matches:
                 continue
             return func(*bound.args, **bound.kwargs)
-        raise NoMatchError
+        raise MatchError(f"No match(args={repr(args)}, kwargs={repr(kwargs)})")
 
     return wrapper
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Mapping  # pylint: disable=no-name-in-module
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 
 class WildcardMatch:
@@ -65,20 +65,20 @@ class MatchContext:
 
             if not issubclass(type(value), pattern_type):
                 return self.no_match()
-            return _match_dict(value.__dict__, pattern_dict, ctx=self, strict=strict)
+            return _match_mapping(value.__dict__, pattern_dict, ctx=self, strict=strict)
 
         if isinstance(pattern, dict):
-            return _match_dict(value, pattern, ctx=self, strict=strict)
+            return _match_mapping(value, pattern, ctx=self, strict=strict)
 
         if isinstance(pattern, tuple):
             if not isinstance(value, tuple) or strict and type(value) != tuple:
                 return self.no_match()
-            return _match_sequence(value, pattern, ctx=self, strict=strict)
+            return _match_sequence(value, pattern, ctx=self)
 
         if isinstance(pattern, list):
             if strict and type(value) != list:
                 return self.no_match()
-            return _match_sequence(value, pattern, ctx=self, strict=strict)
+            return _match_sequence(value, pattern, ctx=self)
 
         return self.no_match()
 
@@ -404,7 +404,7 @@ class Not(Pattern, Nested):
         return Not(pattern=f(self._pattern))
 
 
-def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
+def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
     to_be_matched = {}
     try:
         items = value.items()
@@ -441,7 +441,7 @@ def _match_dict(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> Mat
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
-def _match_sequence(value, pattern, *, ctx: MatchContext, strict: bool) -> MatchResult:
+def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) -> MatchResult:
     try:
         it = iter(value)
     except TypeError:

@@ -3,6 +3,7 @@ from itertools import chain
 from typing import Union, Any
 
 from .core import MatchResult, MatchContext, transform, _, Underscore
+from .error import MatchError
 from .no_value import NoValue
 from .patterns import InstanceOf, Regex
 from .try_match import TryMatch
@@ -18,10 +19,6 @@ def _autopattern(pattern):
         # for recording wildcard matches via MatchContext.record
         return Underscore()
     return pattern
-
-
-class MatchError(Exception):
-    pass
 
 
 def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Union[MatchResult, Any]:
