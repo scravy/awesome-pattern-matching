@@ -93,15 +93,19 @@ class MatchContext:
             self.wildcards[id_] = WildcardMatch(len(self.wildcards))
         self.wildcards[id_].set(value)
 
+    def get_wildcard_matches(self) -> List:
+        wildcard_matches: List = [None] * len(self.wildcards)
+
+        for wildcard_match in self.wildcards.values():
+            wildcard_matches[wildcard_match.index] = wildcard_match.get()
+        return wildcard_matches
+
 
 class MatchResult(Mapping):
     def __init__(self, *, matches: bool, context: MatchContext):
         self._matches: bool = matches
         self._context: MatchContext = context
-        self._wildcard_matches: List = [None] * len(context.wildcards)
-
-        for wildcard_match in context.wildcards.values():
-            self._wildcard_matches[wildcard_match.index] = wildcard_match.value
+        self._wildcard_matches: List = context.get_wildcard_matches()
 
     def __bool__(self):
         return self._matches

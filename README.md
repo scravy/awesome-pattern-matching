@@ -640,11 +640,11 @@ match({'foo': 1, 'bar': 2}, Contains('quux') | Contains('bar'))
 ```
 
 
-### `Regex(regex_pattern, bind_groups: bool = False)`
+### `Regex(regex_pattern, bind_groups: bool = True)`
 
 Matches a string if it completely matches the given regex, as per `re.fullmatch`.
 If the regular expression pattern contains named capturing groups and `bind_groups` is set to `True`,
-this pattern will bind the captured results in the `MatchResult`.
+this pattern will bind the captured results in the `MatchResult` (the default).
 
 To mimic `re.match` or `re.search` the given regular expression `x` can be augmented as `x.*` or `.*x.*`
 respectively.

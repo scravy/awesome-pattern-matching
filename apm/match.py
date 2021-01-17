@@ -14,6 +14,8 @@ def _autopattern(pattern):
     if isinstance(pattern, re.Pattern):
         return Regex(pattern, capture_wildcards=True, bind_groups=False)
     if pattern is _:
+        # this turns every underscore into a distinct object with it's own id - important
+        # for recording wildcard matches via MatchContext.record
         return Underscore()
     return pattern
 

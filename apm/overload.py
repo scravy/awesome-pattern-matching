@@ -15,6 +15,7 @@ class Match:
         return self._pattern
 
     def __call__(self):
+        # typing.get_type_hints requires annotations to be callable, otherwise it bombs out with a TypeError
         return self
 
 
@@ -38,6 +39,7 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
             except TypeError:
                 continue
             matches = True
+            # resolve the annotations which are strings as per __future__
             type_hints = typing.get_type_hints(func)
             for name, value in bound.arguments.items():
                 if name not in type_hints:
