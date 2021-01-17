@@ -34,10 +34,7 @@ class MatchContext:
             self.groups[key] = value
 
     def __getitem__(self, item):
-        values = self.groups[item]
-        if self.multimatch and len(values) == 1:
-            return values[0]
-        return values
+        return self.groups[item]
 
     def __contains__(self, item):
         return item in self.groups
@@ -127,10 +124,8 @@ class MatchResult(Mapping):
     def wildcard_matches(self) -> List:
         return self._wildcard_matches
 
-    def bind(self, target, keeplist=False) -> MatchResult:
+    def bind(self, target) -> MatchResult:
         for k, v in self.items():
-            if self._context.multimatch and len(v) == 1 and not keeplist:
-                v = v[0]
             target[k] = v
         return self
 

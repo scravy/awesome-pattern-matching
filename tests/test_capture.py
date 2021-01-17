@@ -16,7 +16,8 @@ class CaptureTest(unittest.TestCase):
                 "first-name": "John",
                 "last-name": "Doe",
             }],
-            pattern=Each({"first-name": Capture(..., name="first_names")})
+            pattern=Each({"first-name": Capture(..., name="first_names")}),
+            multimatch=True,
         )
         self.assertTrue(result)
         self.assertEqual(["Jane", "John"], result['first_names'])

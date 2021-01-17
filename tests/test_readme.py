@@ -172,20 +172,19 @@ class ReadmeExamples(unittest.TestCase):
 
     # noinspection PyUnresolvedReferences
     def test_multimatch(self):
-        result = match([{'foo': 5}, 3, {'foo': 7}], Each(OneOf({'foo': 'item' @ _}, ...)))
+        result = match([{'foo': 5}, 3, {'foo': 7}], Each(OneOf({'foo': 'item' @ _}, ...)), multimatch=True)
         if result:
             self.assertEqual([5, 7], result['item'])
-        result = match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)))
+        result = match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)), multimatch=True)
         if result:
-            self.assertEqual(5, result['item'])
-        result = match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)),
-                       multimatch=False)
+            self.assertEqual([5], result['item'])
+        result = match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)))
         if result:
             self.assertEqual(7, result['item'])
 
     def test_simple_style_example(self):
         value = {"a": 7, "b": "foo", "c": "bar"}
-        result = match(value, EachItem(_, 'value' @ InstanceOf(str) | ...))
+        result = match(value, EachItem(_, 'value' @ InstanceOf(str) | ...), multimatch=True)
         if result:
             self.assertEqual(["foo", "bar"], result['value'])
 

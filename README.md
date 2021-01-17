@@ -210,27 +210,16 @@ Image: k8s.gcr.io/metrics-server/metrics-server:v0.4.1, Name: metrics-server, Po
 
 ## Multimatch
 
-By default `match` records all matches for captures. If for example `'item' @ InstanceOf(int)` matches multiple times,
-each match will be recorded in `result['item']`.
+By default `match` records only the last match for captures. If for example `'item' @ InstanceOf(int)` matches multiple times,
+the last match will be recorded in `result['item']`. `match` can record all captures using the `multimatch=True` flag:
 
 ```python
-if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)), multimatch=True):
     print(result['item'])  # [5, 7]
-```
 
-If the capture matches only once `result['item']` returns exactly that.
-
-```python
-if result := match([{'foo': 5}, 3, {'quux': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
-    print(result['item'])  # 5
-```
-
-If the capture matched several items a list of these items will be returned. `match` accepts a `multimatch` keyword argument
-which can be set to `False` to avoid this (in that case the capture will be set to the last match).
-
-```python
-if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...)), multimatch=False):
-    print(result['item'])  # 7
+# The default since v0.15.0 is multimatch=False
+if result := match([{'foo': 5}, 3, {'foo': 7, 'bar': 9}], Each(OneOf({'foo': 'item' @ _}, ...))):
+  print(result['item'])  # 7
 ```
 
 
@@ -349,7 +338,7 @@ from apm import *
 
 value = {"a": 7, "b": "foo", "c": "bar"}
 
-if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...)):
+if result := match(value, EachItem(_, 'value' @ InstanceOf(str) | ...), multimatch=True):
     print(result['value'])  # ["foo", "bar"]
 ```
 

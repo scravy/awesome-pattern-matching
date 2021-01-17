@@ -9,7 +9,7 @@ class NoValue:
     pass
 
 
-def match(value, pattern=NoValue, *extra, multimatch=True, strict=False) -> Union[MatchResult, Any]:
+def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Union[MatchResult, Any]:
     ctx = MatchContext(
         multimatch=multimatch,
         strict=strict,
