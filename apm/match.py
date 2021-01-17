@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Union, Any
 
-from .core import MatchResult, MatchContext, transform, _, Underscore
+from .core import MatchResult, MatchContext, transform, _, Underscore, AllOf
 from .no_value import NoValue
 from .patterns import InstanceOf
 from .try_match import TryMatch
@@ -9,9 +9,7 @@ from .try_match import TryMatch
 
 def _autopattern(pattern):
     if isinstance(pattern, type):
-        return InstanceOf(pattern)
-    if isinstance(pattern, tuple) and all(isinstance(i, type) for i in pattern):
-        return InstanceOf(*pattern)
+        return InstanceOf(pattern) & Underscore()
     if pattern is _:
         return Underscore()
     return pattern

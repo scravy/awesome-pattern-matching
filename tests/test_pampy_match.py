@@ -79,3 +79,25 @@ class ComplexMatchTest(unittest.TestCase):
         self.assertEqual(7, match(pet, Pet('rover', _), lambda age: age))
         self.assertEqual('rover', match(pet, Pet(_, 7), lambda name: name))
         self.assertEqual(('rover', 7), match(pet, Pet(_, _), lambda name, age: (name, age)))
+
+    def test_so_many_things(self):
+        expectations = [
+            (3, "this matches the number 3"),
+            (4, "matches any integer"),
+            (("k", 2), "a tuple (a, b) you can use in a function"),
+            ([1, 2, 7], "any list of 3 elements that begins with [1, 2]"),
+            ({'x': 3}, "any dict with a key 'x' and any value associated"),
+            ({'x': 4, 'y': 4}, "any dict with a key 'x' and any value associated"),
+            ("xyz", "anything else"),
+        ]
+
+        for val, expected in expectations:
+            result = match(val,
+                           3, "this matches the number 3",
+                           int, "matches any integer",
+                           (str, int), lambda a, b: "a tuple (a, b) you can use in a function",
+                           [1, 2, _], "any list of 3 elements that begins with [1, 2]",
+                           {'x': _}, "any dict with a key 'x' and any value associated",
+                           _, "anything else"
+                           )
+            self.assertEqual(expected, result)
