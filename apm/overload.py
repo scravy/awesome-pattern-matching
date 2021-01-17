@@ -10,13 +10,9 @@ class Match:
     def __init__(self, pattern):
         self._pattern = pattern
 
-    @property
-    def pattern(self):
-        return self._pattern
-
-    def __call__(self):
+    def __call__(self, value):
         # typing.get_type_hints requires annotations to be callable, otherwise it bombs out with a TypeError
-        return self
+        return match(value, self._pattern)
 
 
 # noinspection PyDefaultArgument
@@ -42,7 +38,7 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
                     continue
                 annotation = type_hints[name]
                 if isinstance(annotation, Match):
-                    if not match(value, annotation.pattern):
+                    if not annotation(value):
                         matches = False
                         break
                 try:
