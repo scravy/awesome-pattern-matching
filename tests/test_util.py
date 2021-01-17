@@ -12,6 +12,11 @@ def f(a: int, b: float, c: str, d: str) -> str:
     pass
 
 
+# noinspection PyUnusedLocal
+def g(a: int, *, b: str) -> float:
+    pass
+
+
 class TypingUtil(unittest.TestCase):
 
     def test_get_arg_types(self):
@@ -31,3 +36,10 @@ class TypingUtil(unittest.TestCase):
         }
         result = util.invoke(lambda a, b: (a, b), args)
         self.assertEqual((None, 3), result)
+
+    def test_get_kwarg_types(self):
+        self.assertEqual({"a": int, "b": float, "c": str, "d": str}, util.get_kwarg_types(f))
+        self.assertEqual({"a": int, "b": str}, util.get_kwarg_types(g))
+
+    def test_get_arg_names(self):
+        self.assertEqual(["a", "b", "c", "d"], util.get_arg_names(f))
