@@ -119,6 +119,9 @@ class TerseStyleTest(unittest.TestCase):
     def test_lambda_with_too_little_parameters(self):
         self.assertEqual("anything", match(1, _, lambda: "anything"))
 
+    def test_lambda_with_too_many_parameters(self):
+        self.assertEqual("anything(1, None, None)", match(1, _, lambda a, b, c: f"anything({a}, {b}, {c})"))
+
     def test_default_value(self):
         self.assertEqual("fallback", match(1, 2, lambda: "something", "fallback"))
 

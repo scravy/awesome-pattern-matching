@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 
 # noinspection PyProtectedMember
+from dataclasses import dataclass
+
 import apm._util as util
 from apm import *
 
@@ -17,7 +19,13 @@ def g(a: int, *, b: str) -> float:
     pass
 
 
-class TypingUtil(unittest.TestCase):
+@dataclass
+class Record:
+    foo: int
+    bar: str
+
+
+class UtilTests(unittest.TestCase):
 
     def test_get_arg_types(self):
         arg_types = util.get_arg_types(f)
@@ -43,3 +51,9 @@ class TypingUtil(unittest.TestCase):
 
     def test_get_arg_names(self):
         self.assertEqual(["a", "b", "c", "d"], util.get_arg_names(f))
+
+    def test_elements(self):
+        self.assertEqual([1, 2, 3], [x for x in util.elements([1, 2, 3])])
+        self.assertEqual([1, tuple([2]), 3], [x for x in util.elements([1, [2], 3])])
+        self.assertEqual([1, 2, 3], [x for x in util.elements({"a": 1, "b": 2, "c": 3})])
+        self.assertEqual([4, "qux"], [x for x in util.elements(Record(4, "qux"))])
