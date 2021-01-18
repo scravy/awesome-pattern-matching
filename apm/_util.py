@@ -1,5 +1,6 @@
 import inspect
 from inspect import CO_VARARGS  # pylint: disable=no-name-in-module
+from itertools import chain, repeat
 from types import CodeType
 from typing import List, Optional, Type, get_type_hints, Dict, Union, Mapping, Iterable
 
@@ -62,6 +63,34 @@ def invoke(func, args: Union[Mapping, Iterable]):
             arg = args[name] if name in args else None
             actual_args.append(arg)
     else:
-        for _, arg in zip(range(0, argcount), args):
+        for _, arg in zip(range(0, argcount), chain(args, repeat(None))):
             actual_args.append(arg)
+
     return func(*actual_args)
+
+
+def _elements(thing):
+    try:
+        yield from thing.__dict__.values()
+        return
+    except AttributeError:
+        pass
+    try:
+        yield from thing.values()
+        return
+    except AttributeError:
+        pass
+    try:
+        yield from thing
+        return
+    except TypeError:
+        pass
+    return thing
+
+
+def elements(thing):
+    for x in _elements(thing):
+        if isinstance(x, (dict, list)):
+            yield tuple(elements(x))
+        else:
+            yield x
