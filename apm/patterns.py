@@ -20,12 +20,15 @@ class Regex(Pattern, StringPattern):
         self._regex: re.Pattern = re.compile(regex)
         self._bind_groups = bind_groups
         if capture_wildcards:
-            self._wildcards = [Underscore() for _i in range(0, self._regex.groups)]
+            self._wildcards = tuple(Underscore() for _i in range(0, self._regex.groups))
         else:
-            self._wildcards = []
+            self._wildcards = tuple([])
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        result = self._regex.fullmatch(value)
+        try:
+            result = self._regex.fullmatch(value)
+        except TypeError:
+            return ctx.no_match()
         if not result:
             return ctx.no_match()
         if self._bind_groups:
@@ -43,10 +46,6 @@ class Regex(Pattern, StringPattern):
             for k, v in result.groupdict():
                 ctx[k] = v
         return result.group(0)
-
-    @property
-    def regex(self) -> re.Pattern:
-        return self._regex
 
 
 class InstanceOf(Pattern):
