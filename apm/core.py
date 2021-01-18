@@ -4,6 +4,7 @@ from collections import Mapping  # pylint: disable=no-name-in-module
 from dataclasses import is_dataclass
 from itertools import chain
 from typing import Optional, List, Dict, Union
+from ._util import elements
 
 
 class WildcardMatch:
@@ -208,6 +209,16 @@ class Pattern(Capturable):
 
     def __invert__(self):
         return Not(self)
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__dict__ == other.__dict__
+
+    def __hash__(self):
+        return hash(tuple(elements(self)))
+
+    def __repr__(self):
+        s = tuple(f"{k}={repr(v)}" for k, v in self.__dict__.items())
+        return f"{type(self).__name__}({', '.join(s)})"
 
 
 class StringPattern:
