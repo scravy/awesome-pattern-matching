@@ -397,3 +397,12 @@ class BasicUseCases(unittest.TestCase):
         if match({'a': 1, 'b': 2}, {'a': _ >> 'foo'}).bind(result):
             self.assertEqual(1, result['foo'])
         self.assertEqual({'foo': 1}, result)
+
+    def test_extract(self):
+        def f(arg: str) -> float:
+            pass
+
+        result = match(f, Arguments('arg_types' @ Some(...)) & Returns('return_type' @ _))
+        self.assertTrue(result)
+        self.assertEqual([str], result.arg_types)
+        self.assertEqual(float, result.return_type)
