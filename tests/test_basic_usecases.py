@@ -417,3 +417,7 @@ class BasicUseCases(unittest.TestCase):
         self.assertFalse(match(g, Arguments(_)))
         self.assertFalse(match(f, Arguments(_, _)))
         self.assertTrue(match(g, Arguments(_, _)))
+
+    def test_strict_match(self):
+        self.assertTrue(match({'a': 3}, {'a': 3.0}))
+        self.assertFalse(match({'a': 3}, {'a': 3.0}, strict=True))

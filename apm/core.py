@@ -43,11 +43,6 @@ class MatchContext:
     def match(self, value, pattern, strict=False) -> MatchResult:
         strict = strict or self.strict
 
-        if pattern == value:
-            if strict:
-                return self.match_if(type(pattern) == type(value))
-            return self.matches()
-
         if pattern is Ellipsis:
             return self.matches()
 
@@ -80,6 +75,11 @@ class MatchContext:
             if strict and type(value) != list:
                 return self.no_match()
             return _match_sequence(value, pattern, ctx=self)
+
+        if pattern == value:
+            if strict:
+                return self.match_if(type(pattern) == type(value))
+            return self.matches()
 
         return self.no_match()
 
