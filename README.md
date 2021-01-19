@@ -151,7 +151,7 @@ def f(n):
 
 f(value)
 
-# terse (pampy) style
+# The terse (pampy) style
 match(value,
       Between( 1, 10), lambda: print("It's between 1 and 10"),
       Between(11, 20), lambda: print("It's between 11 and 20"),
@@ -458,6 +458,14 @@ add(1, 2)
 ```
 
 ### Terse style
+
+- 💚 has access to wildcard captures
+- 💔 does not have access to named result captures
+- 💚 very concise
+- 💚 can return values
+- 🖤 very readable when formatted nicely
+- 🖤 not so well suited for larger match actions
+- 🖤 does not work nicely with auto-formatting tools
 
 As the name indicates the "terse" style is terse. It is inspired by the `pampy`
 pattern matching library and mimics some of its behavior. Despite a slim surface
