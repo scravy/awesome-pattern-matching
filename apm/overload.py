@@ -7,12 +7,13 @@ from .match import match
 
 
 class Match:
-    def __init__(self, pattern):
+    def __init__(self, pattern, **kwargs):
         self._pattern = pattern
+        self._kwargs = kwargs
 
     def __call__(self, value):
         # typing.get_type_hints requires annotations to be callable, otherwise it bombs out with a TypeError
-        return match(value, self._pattern)
+        return match(value, self._pattern, **self._kwargs)
 
 
 # noinspection PyDefaultArgument
