@@ -399,10 +399,21 @@ class BasicUseCases(unittest.TestCase):
         self.assertEqual({'foo': 1}, result)
 
     def test_extract(self):
+        # noinspection PyUnusedLocal
         def f(arg: str) -> float:
             pass
 
+        # noinspection PyUnusedLocal
+        def g(a: int, b: int):
+            pass
+
+        # noinspection PyUnresolvedReferences
         result = match(f, Arguments('arg_types' @ Some(...)) & Returns('return_type' @ _))
         self.assertTrue(result)
         self.assertEqual([str], result.arg_types)
         self.assertEqual(float, result.return_type)
+
+        self.assertTrue(match(f, Arguments(_)))
+        self.assertFalse(match(g, Arguments(_)))
+        self.assertFalse(match(f, Arguments(_, _)))
+        self.assertTrue(match(g, Arguments(_, _)))
