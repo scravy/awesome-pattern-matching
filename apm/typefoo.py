@@ -23,18 +23,13 @@ except ImportError:
         print("WARNING: typing.get_args() is only available from python 3.8+")
         return ()
 
-try:
-    ParameterKind = typing.Literal['', '*', '**']  # pylint: disable=no-member
-except AttributeError:
-    ParameterKind = Any
-
 
 @dataclass
 class Parameter:
     index: Optional[int]
     name: Optional[str]
     type_hint: Any
-    kind: ParameterKind = ''
+    kind: 'typing.Literal["", "*", "**"]' = ""
 
     @property
     def is_positional(self):
@@ -152,7 +147,7 @@ def describe_parameters(func) -> List[Parameter]:
             .of(inspect.Parameter.POSITIONAL_OR_KEYWORD, lambda: Parameter(index, name, type_hint)) \
             .of(inspect.Parameter.POSITIONAL_ONLY, lambda: Parameter(index, None, type_hint)) \
             .of(inspect.Parameter.KEYWORD_ONLY, lambda: Parameter(None, name, type_hint)) \
-            .of(inspect.Parameter.VAR_POSITIONAL, lambda: Parameter(None, None, type_hint, 'x')) \
+            .of(inspect.Parameter.VAR_POSITIONAL, lambda: Parameter(None, None, type_hint, '*')) \
             .of(inspect.Parameter.VAR_KEYWORD, lambda: Parameter(None, None, type_hint, '**')) \
             .otherwise(...)
         parameters.append(parameter)
