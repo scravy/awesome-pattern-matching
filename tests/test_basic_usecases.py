@@ -421,3 +421,10 @@ class BasicUseCases(unittest.TestCase):
     def test_strict_match(self):
         self.assertTrue(match({'a': 3}, {'a': 3.0}))
         self.assertFalse(match({'a': 3}, {'a': 3.0}, strict=True))
+
+    def test_groups(self):
+        # noinspection PyUnresolvedReferences
+        result = match([1, 2, 3], ['a' @ _, 'b' @ _, 'c' @ _])
+        self.assertTrue(result)
+        self.assertEqual(3, len(result))
+        self.assertEqual({'a': 1, 'b': 2, 'c': 3}, result.groups())

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import unittest
-
 # noinspection PyProtectedMember
 from dataclasses import dataclass
 
+# noinspection PyProtectedMember
 import apm._util as util
 from apm import *
+from apm.generic import elements
 
 
 # noinspection PyUnusedLocal
@@ -53,7 +54,7 @@ class UtilTests(unittest.TestCase):
         self.assertEqual(["a", "b", "c", "d"], util.get_arg_names(f))
 
     def test_elements(self):
-        self.assertEqual([1, 2, 3], [x for x in util.elements([1, 2, 3])])
-        self.assertEqual([1, tuple([2]), 3], [x for x in util.elements([1, [2], 3])])
-        self.assertEqual([1, 2, 3], [x for x in util.elements({"a": 1, "b": 2, "c": 3})])
-        self.assertEqual([4, "qux"], [x for x in util.elements(Record(4, "qux"))])
+        self.assertEqual([1, 2, 3], [x for x in elements([1, 2, 3])])
+        self.assertEqual([1, tuple([2]), 3], [x for x in elements([1, [2], 3])])
+        self.assertEqual([1, 2, 3], [x for x in elements({"a": 1, "b": 2, "c": 3})])
+        self.assertEqual([4, "qux"], [x for x in elements(Record(4, "qux"))])

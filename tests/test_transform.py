@@ -20,6 +20,7 @@ def record_type(s):
     def f(x):
         s.add(type(x))
         return x
+
     return f
 
 
@@ -62,3 +63,31 @@ class TransformTest(unittest.TestCase):
             # since we already invested so much time into building combinations of patterns,
             # check that match does not error out (this will sometimes even match due to Not(...))
             self.assertEqual(Not in types, bool(match(None, t)))
+
+    def test_some_transform(self):
+        pt0 = (1, Some(...), 3)
+        pt1 = transform(pt0, lambda x: x)
+        self.assertEqual(pt0, pt1)
+
+    def test_string_transform(self):
+        pt0 = String("a", "b", "c")
+        pt1 = transform(pt0, lambda x: x)
+        self.assertEqual(pt0, pt1)
+
+    def test_fancy_transform(self):
+        # noinspection PyDefaultArgument
+        def generate_name(static={'count': 0}):
+            static['count'] += 1
+            return f"n{static['count']}"
+
+        pattern = (1, Some(...), 3)
+        transformed = transform(pattern, lambda x: Capture(x, name=generate_name()))
+        result = match((1, 2, 3), transformed)
+        self.assertTrue(result)
+        self.assertEqual({
+            'n1': 1,
+            'n2': 2,
+            'n3': [2],
+            'n4': 3,
+            'n5': (1, 2, 3),
+        }, result.groups())
