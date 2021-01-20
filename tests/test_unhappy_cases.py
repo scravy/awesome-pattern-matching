@@ -50,3 +50,12 @@ class UnhappyCasesTest(unittest.TestCase):
             Some(..., at_least=2, exactly=1)
         with self.assertRaises(ValueError):
             Some(..., at_most=2, exactly=1)
+
+    def test_string_no_match(self):
+        self.assertFalse(match("http://example.org/", String(
+            Capture("http://", name='protocol'),
+            Arguments(),
+        )))
+
+    def test_string_one_of_no_match(self):
+        self.assertFalse(match("abc", String("ab", OneOf("e", "f"))))

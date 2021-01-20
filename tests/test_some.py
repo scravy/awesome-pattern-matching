@@ -82,3 +82,12 @@ class Glob(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(result[1], [3, 4, 5])
         self.assertEqual(result[2], [7])
+
+    def test_complex_some(self):
+        result = match([1, 2, 3, 4, 5, 6, 7, 8, 9], [
+            1,
+            Some(...),
+            4,
+            5,
+
+        ])
