@@ -17,6 +17,11 @@ def g(a: int, *, b: str) -> float:
     pass
 
 
+# noinspection PyUnusedLocal
+def h(a: int, *xs: float):
+    pass
+
+
 class UtilTests(unittest.TestCase):
 
     def test_get_arg_types(self):
@@ -44,5 +49,6 @@ class UtilTests(unittest.TestCase):
         self.assertEqual({"a": int, "b": float, "c": str, "d": str}, util.get_kwarg_types(f))
         self.assertEqual({"a": int, "b": str}, util.get_kwarg_types(g))
 
-    def test_get_arg_names(self):
-        self.assertEqual(["a", "b", "c", "d"], util.get_arg_names(f))
+    def test_vararg_types(self):
+        self.assertEqual({"a": int}, util.get_kwarg_types(h))
+        self.assertEqual([int, float], util.get_arg_types(h))

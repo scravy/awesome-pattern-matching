@@ -17,17 +17,6 @@ def get_arg_types(obj) -> List[Optional[Type]]:
     return args
 
 
-def get_arg_names(obj) -> List[str]:
-    code: CodeType = obj.__code__
-    args = []
-    argcount = code.co_argcount
-    if code.co_flags & CO_VARARGS:
-        argcount += 1
-    for ix, name in zip(range(0, argcount), code.co_varnames):
-        args.append(name)
-    return args
-
-
 def is_keyword_parameter(p: inspect.Parameter) -> bool:
     if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
         return True
