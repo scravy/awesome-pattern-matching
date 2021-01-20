@@ -3,7 +3,6 @@ import typing
 from dataclasses import dataclass
 from itertools import chain
 from typing import List, Optional, Union, Dict, Any
-from sys import version_info
 
 from . import MatchContext, MatchResult
 from .case_of import case
@@ -24,10 +23,10 @@ except ImportError:
         print("WARNING: typing.get_args() is only available from python 3.8+")
         return ()
 
-if version_info.minor < 8:
-    ParameterKind = Any
-else:
+try:
     ParameterKind = typing.Literal['', '*', '**']  # pylint: disable=no-member
+except AttributeError:
+    ParameterKind = Any
 
 
 @dataclass
@@ -153,7 +152,7 @@ def describe_parameters(func) -> List[Parameter]:
             .of(inspect.Parameter.POSITIONAL_OR_KEYWORD, lambda: Parameter(index, name, type_hint)) \
             .of(inspect.Parameter.POSITIONAL_ONLY, lambda: Parameter(index, None, type_hint)) \
             .of(inspect.Parameter.KEYWORD_ONLY, lambda: Parameter(None, name, type_hint)) \
-            .of(inspect.Parameter.VAR_POSITIONAL, lambda: Parameter(None, None, type_hint, '*')) \
+            .of(inspect.Parameter.VAR_POSITIONAL, lambda: Parameter(None, None, type_hint, 'x')) \
             .of(inspect.Parameter.VAR_KEYWORD, lambda: Parameter(None, None, type_hint, '**')) \
             .otherwise(...)
         parameters.append(parameter)
