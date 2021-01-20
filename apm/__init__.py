@@ -22,6 +22,7 @@ from .overload import case_distinction, Match
 from .patterns import \
     Arguments, \
     At, \
+    Attrs, \
     Between, \
     Check, \
     Contains, \
@@ -40,6 +41,10 @@ from .patterns import \
     SubclassOf, \
     Transformed
 from .try_match import Case, Default
+from .typefoo import \
+    Parameters, \
+    KwArgs, \
+    VarArgs
 
 __all__ = [
     'AllOf',
@@ -69,6 +74,7 @@ __all__ = [
 
     'Arguments',
     'At',
+    'Attrs',
     'Between',
     'Check',
     'Contains',
@@ -86,4 +92,8 @@ __all__ = [
     'Returns',
     'SubclassOf',
     'Transformed',
+
+    'Parameters',
+    'KwArgs',
+    'VarArgs',
 ]
