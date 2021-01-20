@@ -341,6 +341,17 @@ class BasicUseCases(unittest.TestCase):
         self.assertEqual(result['time'], datetime(2020, 8, 27, 14, 9, 30))
         self.assertEqual(result['command'], "echo 'booya'")
 
+    def test_attrs(self):
+        @dataclass
+        class Thing:
+            foo: str
+            bar: int
+
+        self.assertTrue(match(Thing('xyz', 4711), Attrs(foo='xyz')))
+        self.assertFalse(match(Thing('xyz', 4711), Strict(Attrs(foo='xyz'))))
+        self.assertTrue(match(Thing('xyz', 4711), Attrs(foo=InstanceOf(str), bar=InstanceOf(int))))
+        self.assertTrue(match(Thing('xyz', 4711), Strict(Attrs(foo=InstanceOf(str), bar=InstanceOf(int)))))
+
     def test_transformed_exception(self):
         request = {
             "api_version": "v1",
