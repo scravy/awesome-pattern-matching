@@ -34,7 +34,7 @@ from .patterns import \
     Length, \
     Maybe, \
     NoneOf, \
-    Object, \
+    Items, \
     Regex, \
     Returns, \
     SubclassOf, \
@@ -48,17 +48,19 @@ from .typefoo import \
 Remaining = Many
 Some = Many
 
+Object = Items
+
 __all__ = [
     'AllOf',
     'Capture',
     'Either',
+    'Many',
     'MatchContext',
     'MatchResult',
     'Not',
     'OneOf',
     'Pattern',
     'Remaining',
-    'Many',
     'Some',
     'Strict',
     'String',
@@ -87,6 +89,7 @@ __all__ = [
     'IsNumber',
     'IsString',
     'IsTruish',
+    'Items',
     'Length',
     'Maybe',
     'NoneOf',

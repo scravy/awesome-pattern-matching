@@ -217,7 +217,7 @@ class At(Pattern, Nested):
         return At(path=self._path, pattern=f(self._pattern))
 
 
-class Object(Pattern, Nested):
+class Items(Pattern, Nested):
     def __init__(self, **kwargs):
         self._items = kwargs
 
@@ -228,7 +228,7 @@ class Object(Pattern, Nested):
         items = {}
         for k, v in self._items.items():
             items[k] = f(v)
-        return Object(**items)
+        return Items(**items)
 
 
 class Attrs(Pattern, Nested):

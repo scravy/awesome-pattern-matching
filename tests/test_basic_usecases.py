@@ -327,13 +327,13 @@ class BasicUseCases(unittest.TestCase):
         }
 
         # noinspection PyUnresolvedReferences
-        result = match(request, Object(
+        result = match(request, Items(
             api_version="v1",
-            job=Object(
+            job=Items(
                 run_at=Transformed(datetime.fromisoformat, 'time' @ _),
             ) & OneOf(
-                Object(command='command' @ InstanceOf(str)),
-                Object(spawn='container' @ InstanceOf(str)),
+                Items(command='command' @ InstanceOf(str)),
+                Items(spawn='container' @ InstanceOf(str)),
             )
         ))
         self.assertTrue(result)
@@ -362,8 +362,8 @@ class BasicUseCases(unittest.TestCase):
         }
 
         # noinspection PyUnresolvedReferences
-        self.assertFalse(match(request, Object(
-            job=Object(
+        self.assertFalse(match(request, Items(
+            job=Items(
                 run_at=Transformed(datetime.fromisoformat, 'time' @ _),
             )
         )))
@@ -375,13 +375,13 @@ class BasicUseCases(unittest.TestCase):
                 dct[k] = v
             return dct
 
-        result = match({'a': 1, 'b': 2, 'c': 3}, Object(a=_ >> 'x', b=_ >> 'y', c=_ >> 'z'))
+        result = match({'a': 1, 'b': 2, 'c': 3}, Items(a=_ >> 'x', b=_ >> 'y', c=_ >> 'z'))
         self.assertTrue(result)
         r = f(**result)
         self.assertEqual({'x': 1, 'y': 2, 'z': 3}, r)
 
     def test_maybe(self):
-        pattern = Object(a=...) & Maybe(Object(b=_ >> 'capture'))
+        pattern = Items(a=...) & Maybe(Items(b=_ >> 'capture'))
 
         result = match({'a': 3}, pattern)
         self.assertTrue(result)
