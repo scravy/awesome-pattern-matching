@@ -249,14 +249,6 @@ class Attrs(Pattern, Nested):
         return Attrs(**items)
 
 
-class _IsTruish(Pattern):
-    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        return ctx.match_if(value)
-
-
-IsTruish = _IsTruish()
-
-
 # noinspection PyPep8Naming
 def NoneOf(*args) -> Pattern:
     return ~OneOf(args)
@@ -267,5 +259,6 @@ def Maybe(pattern) -> Pattern:
     return OneOf(pattern, ...)
 
 
+IsTruish = Check(lambda x: bool(x))
 IsNumber = (InstanceOf(int) & ~InstanceOf(bool)) | InstanceOf(float) | InstanceOf(decimal.Decimal)
 IsString = InstanceOf(str)

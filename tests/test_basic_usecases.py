@@ -449,3 +449,8 @@ class BasicUseCases(unittest.TestCase):
     def test_subclass_of(self):
         result = match(bool, SubclassOf(int))
         self.assertTrue(result)
+
+    def test_is_truish(self):
+        self.assertTrue(match([0], IsTruish))
+        self.assertTrue(match([], Not(IsTruish)))
+        self.assertFalse(match([], IsTruish))
