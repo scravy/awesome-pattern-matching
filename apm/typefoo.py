@@ -2,7 +2,8 @@ import inspect
 import typing
 from dataclasses import dataclass
 from itertools import chain
-from typing import List, Optional, Union, Dict, Any, Literal
+from typing import List, Optional, Union, Dict, Any
+from sys import version_info
 
 from . import MatchContext, MatchResult
 from .case_of import case
@@ -23,13 +24,18 @@ except ImportError:
         print("WARNING: typing.get_args() is only available from python 3.8+")
         return ()
 
+if version_info.minor < 8:
+    ParameterKind = Any
+else:
+    ParameterKind = typing.Literal['', '*', '**']
+
 
 @dataclass
 class Parameter:
     index: Optional[int]
     name: Optional[str]
     type_hint: Any
-    kind: Literal['', '*', '**'] = ''
+    kind: ParameterKind = ''
 
     @property
     def is_positional(self):
