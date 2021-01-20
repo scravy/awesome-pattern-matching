@@ -10,7 +10,7 @@ class Glob(unittest.TestCase):
     def test_empty(self):
         self.assertTrue(match(
             [1, 2, 3],
-            [1, Some(...), 2, 3]
+            [1, Many(...), 2, 3]
         ))
 
     def test_at_least(self):
@@ -18,13 +18,13 @@ class Glob(unittest.TestCase):
             [1, 2, 3],
             [
                 1,
-                Some(..., at_least=2),
+                Many(..., at_least=2),
             ]))
         self.assertFalse(match(
             [1, 2],
             [
                 1,
-                Some(..., at_least=2),
+                Many(..., at_least=2),
             ]))
 
     def test_at_most(self):
@@ -32,14 +32,14 @@ class Glob(unittest.TestCase):
             [1, 2, 3, 4],
             [
                 1,
-                Some(..., at_most=2),
+                Many(..., at_most=2),
                 4,
             ]))
         self.assertFalse(match(
             [1, 2, 3],
             [
                 1,
-                Some(..., at_most=2),
+                Many(..., at_most=2),
                 4,
             ]))
 
@@ -48,7 +48,7 @@ class Glob(unittest.TestCase):
             [1, 2, 3],
             [
                 1,
-                Some(..., at_most=2),
+                Many(..., at_most=2),
                 Remaining(...),
             ]))
 
@@ -58,9 +58,9 @@ class Glob(unittest.TestCase):
             [
                 1,
                 2,
-                Some(...),
+                Many(...),
                 6,
-                Some(...),
+                Many(...),
                 8,
                 9,
             ]
@@ -72,9 +72,9 @@ class Glob(unittest.TestCase):
             [
                 1,
                 2,
-                Capture(Some(...), name=1),
+                Capture(Many(...), name=1),
                 6,
-                Capture(Some(...), name=2),
+                Capture(Many(...), name=2),
                 8,
                 9,
             ]
@@ -86,8 +86,8 @@ class Glob(unittest.TestCase):
     def test_exactly(self):
         result = match(range(1, 10), [
             1,
-            Some(..., exactly=3) >> 'a',
-            Some(...) >> 'b',
+            Many(..., exactly=3) >> 'a',
+            Many(...) >> 'b',
             6,
             7,
             8,
@@ -100,8 +100,8 @@ class Glob(unittest.TestCase):
     def test_exactly_empty_following(self):
         result = match(range(1, 10), [
             1,
-            Some(..., exactly=4) >> 'a',
-            Some(...) >> 'b',
+            Many(..., exactly=4) >> 'a',
+            Many(...) >> 'b',
             6,
             7,
             8,

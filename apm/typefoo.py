@@ -6,7 +6,7 @@ from typing import List, Optional, Union, Dict, Any
 
 from . import MatchContext, MatchResult
 from .case_of import case
-from .core import Pattern, Nested, Some, transform
+from .core import Pattern, Nested, Many, transform
 from .no_value import NoValue
 
 try:
@@ -82,10 +82,10 @@ class KwArgs(ParamPattern):
         return ctx.match_if(param.is_kwargs)
 
 
-def mk_pattern(p) -> Union[Pattern, Some]:
+def mk_pattern(p) -> Union[Pattern, Many]:
     if isinstance(p, type) and issubclass(p, ParamPattern):
         return p()
-    if not isinstance(p, (Pattern, Some)):
+    if not isinstance(p, (Pattern, Many)):
         return ParamType(p)
     return p
 
@@ -93,11 +93,11 @@ def mk_pattern(p) -> Union[Pattern, Some]:
 class Parameters(Pattern, Nested):
 
     def __init__(self, *positional, **kwargs):
-        self._params: List[Union[Pattern, Some]] = []
+        self._params: List[Union[Pattern, Many]] = []
         for p in positional:
             pp = transform(p, mk_pattern)
             self._params.append(pp)
-        self._kwargs: Dict[str, Union[Pattern, Some]] = {}
+        self._kwargs: Dict[str, Union[Pattern, Many]] = {}
         for k, p in kwargs.items():
             pp = transform(p, mk_pattern)
             self._kwargs[k] = pp

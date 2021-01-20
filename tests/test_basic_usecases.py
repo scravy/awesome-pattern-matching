@@ -425,7 +425,7 @@ class BasicUseCases(unittest.TestCase):
             pass
 
         # noinspection PyUnresolvedReferences
-        result = match(f, Arguments('arg_types' @ Some(...)) & Returns('return_type' @ _))
+        result = match(f, Arguments('arg_types' @ Many(...)) & Returns('return_type' @ _))
         self.assertTrue(result)
         self.assertEqual([str], result.arg_types)
         self.assertEqual(float, result.return_type)

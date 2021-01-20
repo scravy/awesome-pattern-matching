@@ -24,7 +24,7 @@ class TypeFooTest(unittest.TestCase):
         self.assertFalse(match(f, Parameters(int, VarArgs(float), KwArgs)))
 
     def test_some(self):
-        pat = Parameters(str, Some(float), int)
+        pat = Parameters(str, Many(float), int)
         self.assertTrue(match(g, pat))
         self.assertFalse(match(f, pat))
 

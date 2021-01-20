@@ -78,7 +78,7 @@ class TransformTest(unittest.TestCase):
                 self.assertTrue(bool(results))
 
     def test_some_transform(self):
-        pt0 = (1, Some(...), 3)
+        pt0 = (1, Many(...), 3)
         pt1 = transform(pt0, lambda x: x)
         self.assertEqual(pt0, pt1)
 
@@ -93,7 +93,7 @@ class TransformTest(unittest.TestCase):
             static['count'] += 1
             return f"n{static['count']}"
 
-        pattern = (1, Some(...), 3)
+        pattern = (1, Many(...), 3)
         transformed = transform(pattern, lambda x: Capture(x, name=generate_name()))
         result = match((1, 2, 3), transformed)
         self.assertTrue(result)

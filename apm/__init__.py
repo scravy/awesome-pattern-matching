@@ -9,8 +9,7 @@ from .core import \
     Not, \
     OneOf, \
     Pattern, \
-    Remaining, \
-    Some, \
+    Many, \
     Strict, \
     String, \
     StringPattern, \
@@ -46,6 +45,9 @@ from .typefoo import \
     KwArgs, \
     VarArgs
 
+Remaining = Many
+Some = Many
+
 __all__ = [
     'AllOf',
     'Capture',
@@ -56,6 +58,7 @@ __all__ = [
     'OneOf',
     'Pattern',
     'Remaining',
+    'Many',
     'Some',
     'Strict',
     'String',
