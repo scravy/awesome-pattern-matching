@@ -38,6 +38,9 @@ class UtilTests(unittest.TestCase):
     def test_get_return_type(self):
         self.assertEqual(str, util.get_return_type(f))
 
+    def test_get_return_type_none(self):
+        self.assertEqual(None, util.get_return_type(lambda: None))
+
     def test_invoke(self):
         args = {
             "b": 3,

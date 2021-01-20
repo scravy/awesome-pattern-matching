@@ -69,3 +69,8 @@ class UnhappyCasesTest(unittest.TestCase):
     def test_string_regex_match(self):
         result = match("hello world", String("hello ", Regex("[A-Z][a-z]*")))
         self.assertFalse(result)
+
+    def test_strict_value(self):
+        self.assertTrue(match(3, Value(3.0)))
+        self.assertTrue(match(3, Strict(Value(3))))
+        self.assertFalse(match(3, Strict(Value(3.0))))

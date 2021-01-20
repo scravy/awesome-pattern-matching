@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Mapping  # pylint: disable=no-name-in-module
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple
+from typing import Optional, List, Dict, Union, Tuple, Callable
 
 from .generic import AutoEqHash, AutoRepr
 
@@ -51,8 +51,14 @@ class MatchContext:
             self[k] = v
 
     def match(self, value, pattern, strict=False, off_the_record=False) -> MatchResult:
+        deferred: List[Callable] = []
         if off_the_record:
             self._off_the_record.append({})
+
+            def finalize():
+                self._most_recent_record = self._off_the_record.pop()
+
+            deferred.append(finalize)
 
         try:
             strict = strict or self.strict
@@ -97,8 +103,8 @@ class MatchContext:
 
             return self.no_match()
         finally:
-            if off_the_record:
-                self._most_recent_record = self._off_the_record.pop()
+            for finalizer in deferred:
+                finalizer()
 
     def matches(self) -> MatchResult:
         return MatchResult(matches=True, context=self)
