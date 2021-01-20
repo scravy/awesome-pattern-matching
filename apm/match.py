@@ -1,13 +1,13 @@
 import re
 from itertools import chain
-from typing import Union, Any
+from typing import Union, Any, Optional
 
-from .core import MatchResult, MatchContext, transform, _, Underscore
+from ._util import invoke
+from .core import MatchResult, MatchContext, transform, _, Underscore, Capture
 from .error import MatchError
 from .no_value import NoValue
 from .patterns import InstanceOf, Regex
 from .try_match import TryMatch
-from ._util import invoke
 
 
 def _autopattern(pattern):
@@ -22,7 +22,10 @@ def _autopattern(pattern):
     return pattern
 
 
-def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Union[MatchResult, Any]:
+def match(value, pattern=NoValue, *extra,
+          multimatch: bool = False,
+          strict: bool = False,
+          captureall: Optional[dict] = None) -> Union[MatchResult, Any]:
     """Matches the given value. Three different call styles are possible:
 
     (1) match(value, pattern, **kwargs)
@@ -54,12 +57,22 @@ def match(value, pattern=NoValue, *extra, multimatch=False, strict=False) -> Uni
     :param pattern: The pattern to be matched against (if the "simple" style is used).
     :param multimatch: Whether to capture multiple matches per capture or keep the latest only (defaults to False).
     :param strict: Whether to perform strict matches (defaults to False).
+    :param captureall: EXPERIMENTAL: capture all patterns into the given dictionary
     :return:
     """
     ctx = MatchContext(
         multimatch=multimatch,
         strict=strict,
     )
+    if isinstance(captureall, dict):
+        count = 0
+
+        def generate_name():
+            nonlocal count
+            count += 1
+            return f"n{count}"
+
+        pattern = transform(pattern, lambda x: Capture(x, name=generate_name(), target=captureall))
     if pattern is NoValue:
         raise TryMatch(value, ctx=ctx)
     elif extra:

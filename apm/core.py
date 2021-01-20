@@ -275,14 +275,16 @@ class String(Pattern, Nested):
 
 
 class Capture(Pattern, Nested):
-    def __init__(self, pattern, *, name):
+    def __init__(self, pattern, *, name, target=None):
         self._pattern = pattern
         self._name = name
+        self._target = target
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        result = ctx.match(value, self._pattern)
+        result = ctx.match(value, self._pattern, strict=strict)
         if result:
-            ctx[self._name] = value
+            target = ctx if self._target is None else self._target
+            target[self._name] = value
             return result
         return ctx.no_match()
 
