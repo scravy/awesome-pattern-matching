@@ -91,6 +91,12 @@ class CaptureTest(unittest.TestCase):
         self.assertEqual(result.one, 'abc')
         self.assertEqual(result.two, 'def')
 
+    def test_nested_capture(self):
+        result = match([1, 2, 3, 4], [1, Some(...) >> 'x' >> 'y', 4])
+        self.assertTrue(result)
+        self.assertEqual([2, 3], result.x)
+        self.assertEqual([2, 3], result.y)
+
 
 sample_k8s_response = {
     "containers": [

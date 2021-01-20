@@ -57,22 +57,13 @@ def match(value, pattern=NoValue, *extra,
     :param pattern: The pattern to be matched against (if the "simple" style is used).
     :param multimatch: Whether to capture multiple matches per capture or keep the latest only (defaults to False).
     :param strict: Whether to perform strict matches (defaults to False).
-    :param captureall: EXPERIMENTAL: capture all patterns into the given dictionary
+    :param captureall: Capture all patterns into the given dictionary
     :return:
     """
     ctx = MatchContext(
         multimatch=multimatch,
         strict=strict,
     )
-    if isinstance(captureall, dict):
-        count = 0
-
-        def generate_name():
-            nonlocal count
-            count += 1
-            return f"n{count}"
-
-        pattern = transform(pattern, lambda x: Capture(x, name=generate_name(), target=captureall))
     if pattern is NoValue:
         raise TryMatch(value, ctx=ctx)
     elif extra:
@@ -92,5 +83,16 @@ def match(value, pattern=NoValue, *extra,
                 return invoke(acc[0], [])
             return acc[0]
         raise MatchError(value)
+
+    if isinstance(captureall, dict):
+        count = 0
+
+        def generate_name():
+            nonlocal count
+            count += 1
+            return f"n{count}"
+
+        pattern = transform(pattern, lambda x: Capture(x, name=generate_name(), target=captureall))
+
     result = ctx.match(value, pattern, strict=strict)
     return result

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Mapping  # pylint: disable=no-name-in-module
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Tuple
 
 from .generic import AutoEqHash, AutoRepr
 
@@ -243,20 +243,19 @@ class String(Pattern, Nested):
 
     @staticmethod
     def match_pattern(*, remaining, pattern, ctx: MatchContext) -> Optional[str]:
-        name = ""
+        captures = []
         if isinstance(pattern, Capture):
-            name = pattern.name
-            pattern = pattern.pattern
+            captures, pattern = pattern.get_capture_pattern_chain()
         if isinstance(pattern, str):
             if remaining[:len(pattern)] == pattern:
-                if name:
-                    ctx[name] = pattern
+                for capture in captures:
+                    capture.capture(pattern, ctx=ctx)
                 return pattern
         elif isinstance(pattern, StringPattern):
             result = pattern.string_match(remaining, ctx=ctx)
             if result is not None:
-                if name:
-                    ctx[name] = result
+                for capture in captures:
+                    capture.capture(result, ctx=ctx)
                 return result
         return None
 
@@ -283,10 +282,21 @@ class Capture(Pattern, Nested):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         result = ctx.match(value, self._pattern, strict=strict)
         if result:
-            target = ctx if self._target is None else self._target
-            target[self._name] = value
+            self.capture(value, ctx=ctx)
             return result
         return ctx.no_match()
+
+    def capture(self, value, *, ctx: MatchContext):
+        target = ctx if self._target is None else self._target
+        target[self._name] = value
+
+    def get_capture_pattern_chain(self) -> Tuple[List[Capture], Pattern]:
+        patterns = [self]
+        pattern = self._pattern
+        while isinstance(pattern, Capture):
+            patterns.append(pattern)
+            pattern = pattern.pattern
+        return patterns, pattern
 
     def descend(self, f):
         return Capture(pattern=f(self._pattern), name=self._name)
@@ -294,10 +304,6 @@ class Capture(Pattern, Nested):
     @property
     def pattern(self):
         return self._pattern
-
-    @property
-    def name(self):
-        return self._name
 
 
 class Some(Capturable, Nested, AutoEqHash, AutoRepr):
@@ -457,8 +463,13 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
                     keys_to_remove.append(key)
                     if key in possibly_mismatching_keys:
                         possibly_mismatching_keys.remove(key)
-                elif not isinstance(key_pattern, Underscore):
-                    possibly_mismatching_keys.add(key)
+                else:
+                    if isinstance(key_pattern, Capture):
+                        _, p = key_pattern.get_capture_pattern_chain()
+                    else:
+                        p = key_pattern
+                    if not isinstance(p, Underscore):
+                        possibly_mismatching_keys.add(key)
         for key in keys_to_remove:
             del to_be_matched[key]
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
@@ -471,10 +482,12 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
         return ctx.no_match()
     item_queued = False
     for current_pattern, next_pattern in zip(pattern, chain(pattern[1:], [Not(...)])):
-        name = None
-        if isinstance(current_pattern, Capture) and isinstance(current_pattern.pattern, Some):
-            name = current_pattern.name
-            current_pattern = current_pattern.pattern
+        captures: List[Capture] = []
+        if isinstance(current_pattern, Capture):
+            ps, p = current_pattern.get_capture_pattern_chain()
+            if isinstance(p, Some):
+                current_pattern = p
+                captures = ps
         if isinstance(current_pattern, Some):
             count = 0
             result_value = []
@@ -490,13 +503,13 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
                     item_queued = True
                     break
                 ctx.keep()
-                if name:
+                if captures:
                     result_value.append(item)
                 count += 1
             if not current_pattern.count_ok_wrt_at_least(count):
                 return ctx.no_match()
-            if name:
-                ctx[name] = result_value
+            for capture in captures:
+                capture.capture(result_value, ctx=ctx)
             continue
         try:
             if item_queued:

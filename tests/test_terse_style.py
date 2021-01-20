@@ -41,6 +41,13 @@ class TerseStyleTest(unittest.TestCase):
                 {_: {'age': _}}, lambda a, b: (a, b)
             )
         )
+        self.assertEqual(
+            ('details', 3),
+            match(
+                pet,
+                {_ >> 'key': {'age': _}}, lambda a, b: (a, b)
+            )
+        )
 
     def test_match_class_hierarchies(self):
         class Animal:

@@ -21,8 +21,8 @@ class TryMatchTest(unittest.TestCase):
             result = 'lower'
             id_ = match_result['id']
         finally:
-            self.assertEqual(result, 'lower')
-            self.assertEqual(id_, 'h23ksad8')
+            self.assertEqual('lower', result)
+            self.assertEqual('h23ksad8', id_)
 
     def test_try_match_default(self):
         result = None
