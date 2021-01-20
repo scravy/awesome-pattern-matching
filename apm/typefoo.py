@@ -27,7 +27,7 @@ except ImportError:
 if version_info.minor < 8:
     ParameterKind = Any
 else:
-    ParameterKind = typing.Literal['', '*', '**']
+    ParameterKind = typing.Literal['', '*', '**']  # pylint: disable=no-member
 
 
 @dataclass
