@@ -67,30 +67,3 @@ def invoke(func, args: Union[Mapping, Iterable]):
             actual_args.append(arg)
 
     return func(*actual_args)
-
-
-def _elements(thing):
-    try:
-        yield from thing.__dict__.values()
-        return
-    except AttributeError:
-        pass
-    try:
-        yield from thing.values()
-        return
-    except AttributeError:
-        pass
-    try:
-        yield from thing
-        return
-    except TypeError:
-        pass
-    return thing
-
-
-def elements(thing):
-    for x in _elements(thing):
-        if isinstance(x, (dict, list)):
-            yield tuple(elements(x))
-        else:
-            yield x

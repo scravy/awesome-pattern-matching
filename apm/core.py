@@ -4,7 +4,8 @@ from collections import Mapping  # pylint: disable=no-name-in-module
 from dataclasses import is_dataclass
 from itertools import chain
 from typing import Optional, List, Dict, Union
-from ._util import elements
+
+from .generic import AutoEqHash, AutoRepr
 
 
 class WildcardMatch:
@@ -25,14 +26,19 @@ class MatchContext:
         self.wildcards: Dict[int, WildcardMatch] = {}
         self.multimatch = multimatch
         self.strict = strict
+        self._off_the_record = []
+        self._most_recent_record = {}
 
     def __setitem__(self, key, value):
+        groups = self.groups
+        if self._off_the_record:
+            groups = self._off_the_record[-1]
         if self.multimatch:
-            if key not in self.groups:
-                self.groups[key] = []
-            self.groups[key].append(value)
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(value)
         else:
-            self.groups[key] = value
+            groups[key] = value
 
     def __getitem__(self, item):
         return self.groups[item]
@@ -40,48 +46,59 @@ class MatchContext:
     def __contains__(self, item):
         return item in self.groups
 
-    def match(self, value, pattern, strict=False) -> MatchResult:
-        strict = strict or self.strict
+    def keep(self):
+        for k, v in self._most_recent_record.items():
+            self[k] = v
 
-        if pattern is Ellipsis:
-            return self.matches()
+    def match(self, value, pattern, strict=False, off_the_record=False) -> MatchResult:
+        if off_the_record:
+            self._off_the_record.append({})
 
-        if isinstance(pattern, Pattern):
-            return pattern.match(value, ctx=self, strict=strict)
+        try:
+            strict = strict or self.strict
 
-        if is_dataclass(value):
-            if is_dataclass(pattern):
-                pattern_type = type(pattern)
-                pattern_dict = pattern.__dict__
-            elif isinstance(pattern, Dataclass):
-                pattern_type = pattern.type
-                pattern_dict = pattern.dict
-            else:
-                return self.no_match()
+            if pattern is Ellipsis:
+                return self.matches()
 
-            if not issubclass(type(value), pattern_type):
-                return self.no_match()
-            return _match_mapping(value.__dict__, pattern_dict, ctx=self, strict=strict)
+            if isinstance(pattern, Pattern):
+                return pattern.match(value, ctx=self, strict=strict)
 
-        if isinstance(pattern, dict):
-            return _match_mapping(value, pattern, ctx=self, strict=strict)
+            if is_dataclass(value):
+                if is_dataclass(pattern):
+                    pattern_type = type(pattern)
+                    pattern_dict = pattern.__dict__
+                elif isinstance(pattern, Dataclass):
+                    pattern_type = pattern.type
+                    pattern_dict = pattern.dict
+                else:
+                    return self.no_match()
 
-        if isinstance(pattern, tuple):
-            if not isinstance(value, tuple) or strict and type(value) != tuple:
-                return self.no_match()
-            return _match_sequence(value, pattern, ctx=self)
+                if not issubclass(type(value), pattern_type):
+                    return self.no_match()
+                return _match_mapping(value.__dict__, pattern_dict, ctx=self, strict=strict)
 
-        if isinstance(pattern, list):
-            if strict and type(value) != list:
-                return self.no_match()
-            return _match_sequence(value, pattern, ctx=self)
+            if isinstance(pattern, dict):
+                return _match_mapping(value, pattern, ctx=self, strict=strict)
 
-        if pattern == value:
-            if strict:
-                return self.match_if(type(pattern) == type(value))
-            return self.matches()
+            if isinstance(pattern, tuple):
+                if not isinstance(value, tuple) or strict and type(value) != tuple:
+                    return self.no_match()
+                return _match_sequence(value, pattern, ctx=self)
 
-        return self.no_match()
+            if isinstance(pattern, list):
+                if strict and type(value) != list:
+                    return self.no_match()
+                return _match_sequence(value, pattern, ctx=self)
+
+            if pattern == value:
+                if strict:
+                    return self.match_if(type(pattern) == type(value))
+                return self.matches()
+
+            return self.no_match()
+        finally:
+            if off_the_record:
+                self._most_recent_record = self._off_the_record.pop()
 
     def matches(self) -> MatchResult:
         return MatchResult(matches=True, context=self)
@@ -194,7 +211,7 @@ def transform(pattern, f):
     return f(pattern)
 
 
-class Pattern(Capturable):
+class Pattern(Capturable, AutoEqHash, AutoRepr):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         raise NotImplementedError
 
@@ -209,12 +226,6 @@ class Pattern(Capturable):
 
     def __invert__(self):
         return Not(self)
-
-    def __eq__(self, other):
-        return type(self) == type(other) and self.__dict__ == other.__dict__
-
-    def __hash__(self):
-        return hash(tuple(elements(self)))
 
 
 class StringPattern:
@@ -287,7 +298,7 @@ class Capture(Pattern, Nested):
         return self._name
 
 
-class Some(Capturable, Nested):
+class Some(Capturable, Nested, AutoEqHash, AutoRepr):
     def __init__(self, pattern, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
@@ -306,6 +317,9 @@ class Some(Capturable, Nested):
         self.pattern = pattern
         self.at_least: Optional[int] = at_least
         self.at_most: Optional[int] = at_most
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__dict__ == other.__dict__
 
     def count_ok_wrt_at_most(self, count):
         if self.at_most:
@@ -467,9 +481,13 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
                     item = next(it)
                 except StopIteration:
                     break
-                if not ctx.match(item, current_pattern.pattern) or ctx.match(item, next_pattern):
+                if ctx.match(item, next_pattern, off_the_record=True):
                     item_queued = True
                     break
+                if not ctx.match(item, current_pattern.pattern, off_the_record=True):
+                    item_queued = True
+                    break
+                ctx.keep()
                 if name:
                     result_value.append(item)
                 count += 1
