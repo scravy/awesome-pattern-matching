@@ -231,6 +231,24 @@ class Object(Pattern, Nested):
         return Object(**items)
 
 
+class Attrs(Pattern, Nested):
+    def __init__(self, **kwargs):
+        self._items = kwargs
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        try:
+            attrs = value.__dict__
+        except AttributeError:
+            return ctx.no_match()
+        return ctx.match(attrs, self._items, strict=strict)
+
+    def descend(self, f):
+        items = {}
+        for k, v in self._items.items():
+            items[k] = f(v)
+        return Attrs(**items)
+
+
 class _IsTruish(Pattern):
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         return ctx.match_if(value)
