@@ -29,9 +29,9 @@ def get_arg_names(obj) -> List[str]:
 
 
 def is_keyword_parameter(p: inspect.Parameter) -> bool:
-    if p.kind & inspect.Parameter.POSITIONAL_OR_KEYWORD:
+    if p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD:
         return True
-    if p.kind & inspect.Parameter.KEYWORD_ONLY:
+    if p.kind == inspect.Parameter.KEYWORD_ONLY:
         return True
     return False
 

@@ -14,7 +14,8 @@ def _elements(thing):
         return
     except TypeError:
         pass
-    return thing
+    yield thing
+    return
 
 
 def elements(thing):

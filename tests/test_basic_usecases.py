@@ -213,9 +213,14 @@ class BasicUseCases(unittest.TestCase):
         def f(x: int, y: bool):
             pass
 
+        # noinspection PyUnusedLocal
+        def g(*, x: int):
+            pass
+
         self.assertTrue(match(f, Arguments(x=int)))
         self.assertFalse(match(f, Strict(Arguments(x=int))))
         self.assertTrue(match(f, Strict(Arguments(x=int, y=bool))))
+        self.assertTrue(match(g, Arguments(x=int)))
 
     def test_returns(self):
         def f() -> int:
