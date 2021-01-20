@@ -51,6 +51,12 @@ class UnhappyCasesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             Some(..., at_most=2, exactly=1)
 
+    def test_invalid_values_for_length(self):
+        with self.assertRaises(ValueError):
+            Length(at_least=2, exactly=1)
+        with self.assertRaises(ValueError):
+            Length(at_most=2, exactly=1)
+
     def test_string_no_match(self):
         self.assertFalse(match("http://example.org/", String(
             Capture("http://", name='protocol'),
@@ -59,3 +65,7 @@ class UnhappyCasesTest(unittest.TestCase):
 
     def test_string_one_of_no_match(self):
         self.assertFalse(match("abc", String("ab", OneOf("e", "f"))))
+
+    def test_string_regex_match(self):
+        result = match("hello world", String("hello ", Regex("[A-Z][a-z]*")))
+        self.assertFalse(result)

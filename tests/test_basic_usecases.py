@@ -42,9 +42,9 @@ class BasicUseCases(unittest.TestCase):
         self.assertFalse(match("", IsTruish))
 
     def test_length(self):
-        self.assertTrue(match([], Length(0)))
-        self.assertTrue(match(('abc',), Length(1)))
-        self.assertTrue(match('abc', Length(3)))
+        self.assertTrue(match([], Length(exactly=0)))
+        self.assertTrue(match(('abc',), Length(exactly=1)))
+        self.assertTrue(match('abc', Length(exactly=3)))
         self.assertTrue(match('abc', Length(at_least=1, at_most=4)))
         self.assertFalse(match('abc', Length(at_least=4, at_most=10)))
         self.assertTrue(match('abcde', Length(at_least=4, at_most=5)))
@@ -186,6 +186,7 @@ class BasicUseCases(unittest.TestCase):
         pattern = EachItem(Regex("[a-z]+"), InstanceOf(int))
         self.assertTrue(match({"a": 1, "b": 2}, pattern))
         self.assertFalse(match({"_a": 1, "b": 2}, pattern))
+        self.assertFalse(match({"a": 7.5}, pattern))
 
     def test_transformed(self):
         self.assertTrue(match("value", Transformed(len, 5)))
@@ -428,3 +429,7 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(3, len(result))
         self.assertEqual({'a': 1, 'b': 2, 'c': 3}, result.groups())
+
+    def test_subclass_of(self):
+        result = match(bool, SubclassOf(int))
+        self.assertTrue(result)

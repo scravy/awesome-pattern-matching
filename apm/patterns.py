@@ -43,7 +43,7 @@ class Regex(Pattern, StringPattern):
         if not result:
             return None
         if self._bind_groups:
-            for k, v in result.groupdict():
+            for k, v in result.groupdict().items():
                 ctx[k] = v
         return result.group(0)
 
@@ -76,12 +76,12 @@ class Between(Pattern):
 
 
 class Length(Pattern):
-    def __init__(self, length=None, at_least: int = None, at_most: int = None):
-        if length is not None:
+    def __init__(self, *, exactly: int = None, at_least: int = None, at_most: int = None):
+        if exactly is not None:
             if at_least is not None or at_most is not None:
                 raise ValueError("If length is given, 'at_least' or 'at_most' must not be given.")
-            self._at_least = length
-            self._at_most = length
+            self._at_least = exactly
+            self._at_most = exactly
         else:
             self._at_least = at_least
             self._at_most = at_most
@@ -123,6 +123,8 @@ class Arguments(Pattern, Nested):
         self._kwargs: Dict[str, Any] = kwargs
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        if not callable(value):
+            return ctx.no_match()
         if self._pattern:
             result = ctx.match(get_arg_types(value), self._pattern)
             if not result:
@@ -142,6 +144,8 @@ class Returns(Pattern, Nested):
         self._pattern = pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        if not callable(value):
+            return ctx.no_match()
         return ctx.match(get_return_type(value), self._pattern)
 
     def descend(self, f):
@@ -155,7 +159,11 @@ class Each(Pattern, Nested):
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         count = 0
-        for item in value:
+        try:
+            it = iter(value)
+        except TypeError:
+            return ctx.no_match()
+        for item in it:
             result = ctx.match(item, self._pattern)
             if not result:
                 return result
@@ -172,7 +180,11 @@ class EachItem(Pattern, Nested):
         self._value_pattern = value_pattern
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
-        for k, v in value.items():
+        try:
+            items = value.items()
+        except AttributeError:
+            return ctx.no_match()
+        for k, v in items:
             result = ctx.match(k, self._key_pattern)
             if not result:
                 return result
@@ -197,7 +209,7 @@ class At(Pattern, Nested):
         for k in self._path:
             try:
                 value = value[k]
-            except KeyError:
+            except (TypeError, KeyError):
                 return ctx.no_match()
         return ctx.match(value, self._pattern)
 

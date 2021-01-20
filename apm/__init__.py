@@ -37,6 +37,7 @@ from .patterns import \
     Object, \
     Regex, \
     Returns, \
+    SubclassOf, \
     Transformed
 from .try_match import Case, Default
 
@@ -83,5 +84,6 @@ __all__ = [
     'Object',
     'Regex',
     'Returns',
+    'SubclassOf',
     'Transformed',
 ]

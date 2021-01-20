@@ -32,6 +32,12 @@ class TransformTest(unittest.TestCase):
             OneOf("foo", "bar"),
             AllOf("foo", "bar"),
             Either("foo", "bar"),
+            Each(SubclassOf(int)),
+            EachItem(InstanceOf(str), SubclassOf(type)),
+            Object(foo=17),
+            At(path=["foo", "bar"], pattern=...),
+            Arguments(foo=int, bar=float),
+            Returns(str),
             [1, 2, 3],
             "foo",
             1.0,
@@ -62,7 +68,13 @@ class TransformTest(unittest.TestCase):
             self.assertNotEqual(p, transform(p, lambda x: Not(x)))
             # since we already invested so much time into building combinations of patterns,
             # check that match does not error out (this will sometimes even match due to Not(...))
-            self.assertEqual(Not in types, bool(match(None, t)))
+            expected_to_match = Not in types
+            self.assertEqual(expected_to_match, bool(match(None, t)))
+            # also do a check for captureall=, which is using a more fancy transform
+            results = {}
+            self.assertEqual(expected_to_match, bool(match(None, p, captureall=results)))
+            if expected_to_match:
+                self.assertTrue(bool(results))
 
     def test_some_transform(self):
         pt0 = (1, Some(...), 3)
