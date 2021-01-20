@@ -133,7 +133,6 @@ class MatchResult(Mapping):
     def __init__(self, *, matches: bool, context: MatchContext):
         self._matches: bool = matches
         self._context: MatchContext = context
-        self._wildcard_matches: List = context.get_wildcard_matches()
 
     def __bool__(self):
         return self._matches
@@ -163,7 +162,7 @@ class MatchResult(Mapping):
         return self._context.groups
 
     def wildcard_matches(self) -> List:
-        return self._wildcard_matches
+        return self._context.get_wildcard_matches()
 
     def bind(self, target) -> MatchResult:
         for k, v in self.items():

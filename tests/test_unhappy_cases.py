@@ -74,3 +74,10 @@ class UnhappyCasesTest(unittest.TestCase):
         self.assertTrue(match(3, Value(3.0)))
         self.assertTrue(match(3, Strict(Value(3))))
         self.assertFalse(match(3, Strict(Value(3.0))))
+
+    def test_mismatching_exception(self):
+        with self.assertRaises(TypeError):
+            try:
+                raise ValueError
+            except Case(...):
+                pass
