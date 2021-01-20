@@ -216,10 +216,6 @@ class Pattern(Capturable):
     def __hash__(self):
         return hash(tuple(elements(self)))
 
-    def __repr__(self):
-        s = tuple(f"{k}={repr(v)}" for k, v in self.__dict__.items())
-        return f"{type(self).__name__}({', '.join(s)})"
-
 
 class StringPattern:
     """Experimental"""
@@ -468,18 +464,10 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
             result_value = []
             while current_pattern.count_ok_wrt_at_most(count + 1):
                 try:
-                    if item_queued:
-                        item_queued = False
-                    else:
-                        item = next(it)
+                    item = next(it)
                 except StopIteration:
                     break
-                # noinspection PyUnboundLocalVariable
-                if ctx.match(item, next_pattern):
-                    item_queued = True
-                    break
-                # noinspection PyUnboundLocalVariable
-                if not ctx.match(item, current_pattern.pattern):
+                if not ctx.match(item, current_pattern.pattern) or ctx.match(item, next_pattern):
                     item_queued = True
                     break
                 if name:
@@ -497,6 +485,7 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
                 item = next(it)
         except StopIteration:
             return ctx.no_match()
+        # noinspection PyUnboundLocalVariable
         result = ctx.match(item, current_pattern)
         if not result:
             return result
