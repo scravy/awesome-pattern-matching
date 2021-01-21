@@ -34,6 +34,7 @@ class TransformTest(unittest.TestCase):
             Either("foo", "bar"),
             Each(SubclassOf(int)),
             EachItem(InstanceOf(str), SubclassOf(type)),
+            Parameters(int, k=str),
             Items(foo=17),
             Attrs(bar=117),
             At(path=["foo", "bar"], pattern=...),

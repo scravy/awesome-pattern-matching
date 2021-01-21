@@ -81,3 +81,9 @@ class UnhappyCasesTest(unittest.TestCase):
                 raise ValueError
             except Case(...):
                 pass
+
+    def test_parampattern_no_match(self):
+        from apm.typefoo import ParamType, KwArgs, VarArgs
+        self.assertFalse(match(1, KwArgs()))
+        self.assertFalse(match(1, VarArgs()))
+        self.assertFalse(match(1, ParamType(int)))
