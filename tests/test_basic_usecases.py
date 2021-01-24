@@ -454,3 +454,10 @@ class BasicUseCases(unittest.TestCase):
         self.assertTrue(match([0], IsTruish))
         self.assertTrue(match([], Not(IsTruish)))
         self.assertFalse(match([], IsTruish))
+
+    def test_range(self):
+        self.assertTrue(match([0, 1, 2], range(0, 3)))
+        self.assertFalse(match([0, 1, 2], range(0, 3), strict=True))
+        self.assertTrue(match(range(0, 3), range(0, 3), strict=True))
+        self.assertFalse(match(range(0, 3), range(0, 2), strict=True))
+        self.assertFalse(match(range(0, 2), range(0, 3), strict=True))

@@ -83,16 +83,21 @@ class MatchContext:
                     return self.no_match()
                 return _match_mapping(value.__dict__, pattern_dict, ctx=self, strict=strict)
 
-            if isinstance(pattern, dict):
+            if type(pattern) == dict:
                 return _match_mapping(value, pattern, ctx=self, strict=strict)
 
-            if isinstance(pattern, tuple):
+            if type(pattern) == tuple:
                 if not isinstance(value, tuple) or strict and type(value) != tuple:
                     return self.no_match()
                 return _match_sequence(value, pattern, ctx=self)
 
-            if isinstance(pattern, list):
+            if type(pattern) == list:
                 if strict and type(value) != list:
+                    return self.no_match()
+                return _match_sequence(value, pattern, ctx=self)
+
+            if type(pattern) == range:
+                if strict and type(value) != range:
                     return self.no_match()
                 return _match_sequence(value, pattern, ctx=self)
 
