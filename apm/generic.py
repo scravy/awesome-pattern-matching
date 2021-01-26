@@ -36,7 +36,26 @@ class AutoEqHash:
         return hash(tuple(elements(self)))
 
 
+def _repr(t):
+    if type(t) == dict:
+        result = ["{"]
+        one = False
+        for k, v in t.items():
+            if one:
+                result.append(", ")
+            if type(k) == str:
+                result.append(k)
+            else:
+                result.append(repr(k))
+            result.append("=")
+            result.append(_repr(v))
+            one = True
+        result.append("}")
+        return "".join(result)
+    return repr(t)
+
+
 class AutoRepr:
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.__dict__})"
+        return f"{type(self).__name__}({_repr(self.__dict__)})"

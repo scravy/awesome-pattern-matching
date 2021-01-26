@@ -47,4 +47,4 @@ class GenericTests(unittest.TestCase):
 
         x = X(1, 2)
 
-        self.assertEqual("X({'a': 1, 'b': 2})", repr(x))
+        self.assertEqual("X({a=1, b=2})", repr(x))
