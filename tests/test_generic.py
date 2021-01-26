@@ -3,7 +3,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import dataclass
 
-from apm.generic import elements, AutoRepr, AutoEqHash
+# noinspection PyProtectedMember
+from apm.generic import elements, AutoRepr, AutoEqHash, _repr
 
 
 @dataclass
@@ -48,3 +49,6 @@ class GenericTests(unittest.TestCase):
         x = X(1, 2)
 
         self.assertEqual("X({a=1, b=2})", repr(x))
+
+    def test_repr(self):
+        self.assertEqual("{0='a', 1='b'}", _repr({0: "a", 1: "b"}))
