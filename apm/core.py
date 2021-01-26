@@ -178,9 +178,17 @@ class MatchResult(Mapping):
             target[k] = v
         return self
 
-    def explain(self) -> str:
+    def explain(self, *, short: bool = False) -> str:
+        if self._matches:
+            return "The pattern matches the given value."
+        if not self._match_stack:
+            return "Don't really know why this pattern did not match." \
+                   " Please report an issue about this at https://github.com/scravy/awesome-pattern-matching/issues"
         reasons = []
-        for v, p in self._match_stack:
+        match_stack: List[Tuple] = self._match_stack
+        if short:
+            match_stack = [match_stack[-1]]
+        for v, p in match_stack:
             reasons.append(f"{v}\n...did not match the pattern:\n{repr(p)}")
         return "\n...because:\n".join(reasons)
 

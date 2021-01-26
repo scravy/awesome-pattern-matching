@@ -28,6 +28,18 @@ class ReportingTest(unittest.TestCase):
             f"...did not match the pattern:\n"
             f"{repr(self.instance_of)}", result.explain())
 
+    def test_explain_short(self):
+        result = match([1, 2, "uvw", 4], self.each)
+        self.assertEqual(
+            f"uvw\n"
+            f"...did not match the pattern:\n"
+            f"{repr(self.instance_of)}", result.explain(short=True))
+
+    def test_explain_matching(self):
+        result = match(1, self.instance_of)
+        self.assertTrue(result)
+        self.assertEqual("The pattern matches the given value.", result.explain())
+
 
 if __name__ == '__main__':
     unittest.main()
