@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Mapping  # pylint: disable=no-name-in-module
+from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
 from typing import Optional, List, Dict, Union, Tuple, Callable
@@ -28,6 +29,7 @@ class MatchContext:
         self.strict = strict
         self._off_the_record = []
         self._most_recent_record = {}
+        self._match_stack = []
 
     def __setitem__(self, key, value):
         groups = self.groups
@@ -50,15 +52,16 @@ class MatchContext:
         for k, v in self._most_recent_record.items():
             self[k] = v
 
+    def _pop_most_recent_record(self):
+        self._most_recent_record = self._off_the_record.pop()
+
     def match(self, value, pattern, strict=False, off_the_record=False) -> MatchResult:
         deferred: List[Callable] = []
+        self._match_stack.append((value, pattern))
+        deferred.append(lambda: self._match_stack.pop())
         if off_the_record:
             self._off_the_record.append({})
-
-            def finalize():
-                self._most_recent_record = self._off_the_record.pop()
-
-            deferred.append(finalize)
+            deferred.append(self._pop_most_recent_record)
 
         try:
             strict = strict or self.strict
@@ -112,13 +115,13 @@ class MatchContext:
                 finalizer()
 
     def matches(self) -> MatchResult:
-        return MatchResult(matches=True, context=self)
+        return MatchResult(matches=True, context=self, match_stack=copy(self._match_stack))
 
     def no_match(self) -> MatchResult:
-        return MatchResult(matches=False, context=self)
+        return MatchResult(matches=False, context=self, match_stack=copy(self._match_stack))
 
     def match_if(self, condition: bool) -> MatchResult:
-        return MatchResult(matches=bool(condition), context=self)
+        return MatchResult(matches=bool(condition), context=self, match_stack=copy(self._match_stack))
 
     def record(self, for_pattern, value):
         id_ = id(for_pattern)
@@ -135,9 +138,10 @@ class MatchContext:
 
 
 class MatchResult(Mapping):
-    def __init__(self, *, matches: bool, context: MatchContext):
+    def __init__(self, *, matches: bool, context: MatchContext, match_stack: List[Tuple]):
         self._matches: bool = matches
         self._context: MatchContext = context
+        self._match_stack: List[Tuple] = match_stack
 
     def __bool__(self):
         return self._matches
@@ -173,6 +177,12 @@ class MatchResult(Mapping):
         for k, v in self.items():
             target[k] = v
         return self
+
+    def explain(self) -> str:
+        reasons = []
+        for v, p in self._match_stack:
+            reasons.append(f"{v}\n...did not match the pattern:\n{repr(p)}")
+        return "\n...because:\n".join(reasons)
 
 
 class Capturable:
