@@ -2,7 +2,7 @@ test: lint
 	python3 -m unittest -v
 
 coverage:
-	rm .coverage
+	rm -f .coverage
 	coverage run --branch --source=apm -m unittest discover
 	coverage report | tee coverage.txt
 	coverage html
