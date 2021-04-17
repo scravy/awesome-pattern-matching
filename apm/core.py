@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Mapping  # pylint: disable=no-name-in-module
+from collections.abc import Mapping
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
