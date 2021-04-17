@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable
+from typing import Optional, List, Dict, Union, Tuple, Callable, Mapping
 
 from .generic import AutoEqHash, AutoRepr
 
