@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import collections.abc as abc
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable, Mapping
+from typing import Optional, List, Dict, Union, Tuple, Callable
 
 from .generic import AutoEqHash, AutoRepr
 
@@ -136,7 +137,7 @@ class MatchContext:
         return wildcard_matches
 
 
-class MatchResult(Mapping):
+class MatchResult(abc.Mapping):
     def __init__(self, *, matches: bool, context: MatchContext, match_stack: List[Tuple]):
         self._matches: bool = matches
         self._context: MatchContext = context
@@ -221,7 +222,7 @@ def transform(pattern, f):
     def rf(p):
         return transform(p, f)
 
-    if is_dataclass(pattern):
+    if is_dataclass(pattern) and not isinstance(pattern, type):
         pattern = Dataclass(type(pattern), pattern.__dict__)
 
     if isinstance(pattern, Nested):
