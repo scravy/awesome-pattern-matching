@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import collections.abc as abc
+from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable
+from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar
 
 from .generic import AutoEqHash, AutoRepr
+from .no_value import NoValue
 
 
 class WildcardMatch:
@@ -194,11 +196,16 @@ class MatchResult(abc.Mapping):
 
 
 class Capturable:
-    def __rshift__(self, other):
+    def __capture(self, other: Union[str, Aggregation]):
+        if isinstance(other, Aggregation):
+            return Capture(self, name=other.name, agg=other)
         return Capture(self, name=other)
 
-    def __rmatmul__(self, other):
-        return Capture(self, name=other)
+    def __rshift__(self, other: Union[str, Aggregation]):
+        return self.__capture(other)
+
+    def __rmatmul__(self, other: Union[str, Aggregation]):
+        return self.__capture(other)
 
 
 class Nested:
@@ -301,11 +308,43 @@ class String(Pattern, Nested):
         return String(*(f(p) for p in self._patterns))
 
 
-class Capture(Pattern, Nested):
-    def __init__(self, pattern, *, name, target=None):
-        self._pattern = pattern
+T = TypeVar('T')
+
+
+class Aggregation(Generic[T], ABC):
+    def __init__(self, name: Optional[str] = None):
         self._name = name
+        self._value = NoValue
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    @property
+    def value(self):
+        if self._value is NoValue:
+            return self.new()
+        return self._value
+
+    @abstractmethod
+    def new(self) -> T:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _add(self, aggregate: T, value) -> T:
+        raise NotImplementedError
+
+    def add(self, aggregate: T, value) -> T:
+        self._value = self._add(aggregate, value)
+        return self._value
+
+
+class Capture(Pattern, Nested):
+    def __init__(self, pattern, *, name: str, target=None, agg: Optional[Aggregation] = None):
+        self._pattern = pattern
+        self._name: str = name
         self._target = target
+        self._aggregation: Aggregation = agg
 
     def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
         result = ctx.match(value, self._pattern, strict=strict)
@@ -316,7 +355,12 @@ class Capture(Pattern, Nested):
 
     def capture(self, value, *, ctx: MatchContext):
         target = ctx if self._target is None else self._target
-        target[self._name] = value
+        if self._aggregation:
+            if self._name not in target:
+                target[self._name] = self._aggregation.new()
+            target[self._name] = self._aggregation.add(target[self._name], value)
+        else:
+            target[self._name] = value
 
     def get_capture_pattern_chain(self) -> Tuple[List[Capture], Pattern]:
         patterns = [self]

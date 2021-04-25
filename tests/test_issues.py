@@ -19,3 +19,7 @@ class UtilTests(unittest.TestCase):
 
         result = match(Foo(1), Foo, 'this matches', 'no match unfortunately')
         self.assertEqual('this matches', result)
+
+        self.assertTrue(match(Foo(1), Foo, True, False))
+        self.assertTrue(match(Foo(1), Foo(1), True, False))
+        self.assertFalse(match(Foo(1), Foo(2), True, False))

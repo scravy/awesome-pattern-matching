@@ -1,3 +1,4 @@
+from . import agg
 from .__pkginfo__ import __version__
 from .case_of import case
 from .core import \
@@ -51,6 +52,8 @@ Some = Many
 Object = Items
 
 __all__ = [
+    'agg',
+
     'AllOf',
     'Capture',
     'Either',
