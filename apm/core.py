@@ -5,8 +5,9 @@ from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable
+from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable
 
+from ._util import SeqIterator
 from .generic import AutoEqHash, AutoRepr
 from .no_value import NoValue
 
@@ -564,9 +565,9 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
-def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) -> MatchResult:
+def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
     try:
-        it = iter(value)
+        it = SeqIterator(value)
     except TypeError:
         return ctx.no_match()
     item_queued = False
