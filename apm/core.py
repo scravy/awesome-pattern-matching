@@ -5,7 +5,7 @@ from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable
+from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable, Literal
 
 from ._util import SeqIterator
 from .generic import AutoEqHash, AutoRepr
@@ -565,12 +565,37 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
+def _match_some(it: SeqIterator, current_pattern: Some, next_pattern, *,
+                captures,
+                ctx: MatchContext) -> Union[None, Literal[False], SeqIterator]:
+    it = it.fork()
+    count = 0
+    result_value = []
+    while current_pattern.count_ok_wrt_at_most(count + 1):
+        try:
+            item = next(it)
+        except StopIteration:
+            return None
+        if ctx.match(item, next_pattern, off_the_record=True):
+            return None
+        if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
+            return None
+        ctx.keep()
+        if captures:
+            result_value.append(item)
+        count += 1
+    if not current_pattern.count_ok_wrt_at_least(count):
+        return False
+    for capture in captures:
+        capture.capture(result_value, ctx=ctx)
+    return it
+
+
 def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
     try:
         it = SeqIterator(value)
     except TypeError:
         return ctx.no_match()
-    item_queued = False
     for current_pattern, next_pattern in zip(pattern, chain(pattern[1:], [Not(...)])):
         captures: List[Capture] = []
         if isinstance(current_pattern, Capture):
@@ -589,10 +614,10 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
                 except StopIteration:
                     break
                 if ctx.match(item, next_pattern, off_the_record=True):
-                    item_queued = True
+                    it.rewind()
                     break
                 if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
-                    item_queued = True
+                    it.rewind()
                     break
                 ctx.keep()
                 if captures:
@@ -603,11 +628,16 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
             for capture in captures:
                 capture.capture(result_value, ctx=ctx)
             continue
+        if isinstance(current_pattern, Some) and len(current_pattern.patterns) == -1:
+            advanced_it = _match_some(it, current_pattern, next_pattern, captures=captures, ctx=ctx)
+            if advanced_it is None:
+                break
+            elif advanced_it is False:
+                return ctx.no_match()
+            it = advanced_it
+            continue
         try:
-            if item_queued:
-                item_queued = False
-            else:
-                item = next(it)
+            item = next(it)
         except StopIteration:
             return ctx.no_match()
         # noinspection PyUnboundLocalVariable
@@ -618,7 +648,7 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
         next(it)
         return ctx.no_match()
     except StopIteration:
-        return ctx.match_if(not item_queued)
+        return ctx.matches()
 
 
 class Underscore(Pattern):

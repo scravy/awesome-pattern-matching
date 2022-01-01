@@ -78,3 +78,16 @@ class UtilTests(unittest.TestCase):
         xs = (1, 2, 3)
         ys = [*util.SeqIterator(xs)]
         self.assertEqual([*xs], ys)
+
+    def test_seq_iterator_fork(self):
+        xs = (1, 2, 3)
+        it = util.SeqIterator(xs)
+        a = next(it)
+        it2 = iter(it)
+        b = next(it)
+        c = next(it)
+        d = next(it2)
+        self.assertEqual(1, a)
+        self.assertEqual(2, b)
+        self.assertEqual(3, c)
+        self.assertEqual(2, d)

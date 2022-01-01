@@ -82,7 +82,7 @@ class MemoIterator:
 class SeqIterator(Iterator):
     __slots__ = ('_it', '_ix')
 
-    def __init__(self, seq: Union[Iterable, MemoIterator], from_index: int = 0):
+    def __init__(self, seq: Union[Iterable, MemoIterator], *, from_index: int = 0):
         self._it = seq if isinstance(seq, MemoIterator) else MemoIterator(seq)
         self._ix = from_index
 
@@ -91,5 +91,11 @@ class SeqIterator(Iterator):
         self._ix += 1
         return elem
 
-    def __iter__(self):
-        return SeqIterator(self._it, self._ix)
+    def __iter__(self) -> 'SeqIterator':
+        return SeqIterator(self._it, from_index=self._ix)
+
+    def fork(self) -> 'SeqIterator':
+        return self.__iter__()
+
+    def rewind(self, steps: int = 1):
+        self._ix = max(0, self._ix - steps)
