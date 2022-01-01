@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 
 try:
@@ -78,6 +80,9 @@ class MemoIterator:
             self._elements.append(elem)
         return self._elements[ix]
 
+    def status_at(self, ix: int):
+        return self._elements[:ix], self._elements[ix:]
+
 
 class SeqIterator(Iterator):
     __slots__ = ('_it', '_ix')
@@ -91,11 +96,15 @@ class SeqIterator(Iterator):
         self._ix += 1
         return elem
 
-    def __iter__(self) -> 'SeqIterator':
+    def __iter__(self) -> SeqIterator:
         return SeqIterator(self._it, from_index=self._ix)
 
-    def fork(self) -> 'SeqIterator':
+    def fork(self) -> SeqIterator:
         return self.__iter__()
 
     def rewind(self, steps: int = 1):
         self._ix = max(0, self._ix - steps)
+
+    def __repr__(self):
+        consumed, remaining = self._it.status_at(self._ix)
+        return f"consumed={', '.join(repr(e) for e in consumed)} remaining={', '.join(repr(e) for e in remaining)}"
