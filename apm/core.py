@@ -5,7 +5,7 @@ from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable, Literal
+from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable, Type
 
 from ._util import SeqIterator
 from .generic import AutoEqHash, AutoRepr
@@ -565,31 +565,76 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
-def _match_some(it: SeqIterator, current_pattern: Some, next_pattern, *,
-                captures,
-                ctx: MatchContext) -> bool:
+def _match_some(it: SeqIterator, current_pattern, *,
+                terminators: List, ctx: MatchContext) -> Optional[SeqIterator]:
     count = 0
     result_value = []
+    captures = _get_captures(current_pattern)
+    current_pattern = _get_as(current_pattern, Some)
     while current_pattern.count_ok_wrt_at_most(count + 1):
-        try:
-            item = next(it)
-        except StopIteration:
-            break
-        if ctx.match(item, next_pattern, off_the_record=True):
-            it.rewind()
-            break
-        if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
-            it.rewind()
+        do_break = False
+        for ix, pattern in enumerate(current_pattern.patterns):
+            try:
+                item = next(it)
+            except StopIteration:
+                do_break = True
+                break
+            if ix == 0:
+                for next_pattern in reversed(terminators):
+                    if ctx.match(item, next_pattern, off_the_record=True):
+                        it.rewind()
+                        do_break = True
+                        break
+                if do_break:
+                    break
+            if _is_a(pattern, Some):
+                if (r := _match_some(it.fork(), pattern, terminators=terminators, ctx=ctx)) is not None:
+                    do_break = True
+                    break
+                it = r
+            elif not ctx.match(item, pattern, off_the_record=True):
+                it.rewind()
+                do_break = True
+                break
+        if do_break:
             break
         ctx.keep()
         if captures:
+            # noinspection PyUnboundLocalVariable
             result_value.append(item)
         count += 1
     if not current_pattern.count_ok_wrt_at_least(count):
-        return False
+        return None
     for capture in captures:
         capture.capture(result_value, ctx=ctx)
-    return True
+    return it
+
+
+def _is_a(pattern, type_) -> bool:
+    if isinstance(pattern, type_):
+        return True
+    if isinstance(pattern, Capture):
+        _, p = pattern.get_capture_pattern_chain()
+        if isinstance(p, type_):
+            return True
+    return False
+
+
+def _get_as(pattern, type_: Type[T]) -> T:
+    if isinstance(pattern, type_):
+        return pattern
+    if isinstance(pattern, Capture):
+        _, p = pattern.get_capture_pattern_chain()
+        if isinstance(p, type_):
+            return p
+    assert False, f'requested {type_}, but pattern is of type {type(pattern)}'
+
+
+def _get_captures(pattern) -> List[Capture]:
+    if isinstance(pattern, Capture):
+        ps, _ = pattern.get_capture_pattern_chain()
+        return ps
+    return []
 
 
 def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
@@ -598,17 +643,10 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
     except TypeError:
         return ctx.no_match()
     for current_pattern, next_pattern in zip(pattern, chain(pattern[1:], [Not(...)])):
-        captures: List[Capture] = []
-        if isinstance(current_pattern, Capture):
-            ps, p = current_pattern.get_capture_pattern_chain()
-            if isinstance(p, Some):
-                current_pattern = p
-                captures = ps
-        if isinstance(current_pattern, Some) and len(current_pattern.patterns) > 1:
-            raise NotImplementedError
-        if isinstance(current_pattern, Some) and len(current_pattern.patterns) == 1:
-            if not _match_some(it, current_pattern, next_pattern, captures=captures, ctx=ctx):
+        if _is_a(current_pattern, Some):
+            if (r := _match_some(it, current_pattern, terminators=[next_pattern], ctx=ctx)) is None:
                 return ctx.no_match()
+            it = r
             continue
         try:
             item = next(it)
