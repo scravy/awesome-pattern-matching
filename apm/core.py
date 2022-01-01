@@ -5,7 +5,7 @@ from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
 from itertools import chain
-from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar
+from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable
 
 from .generic import AutoEqHash, AutoRepr
 from .no_value import NoValue
@@ -340,9 +340,9 @@ class Aggregation(Generic[T], ABC):
 
 
 class Capture(Pattern, Nested):
-    def __init__(self, pattern, *, name: str, target=None, agg: Optional[Aggregation] = None):
+    def __init__(self, pattern, *, name: Hashable, target=None, agg: Optional[Aggregation] = None):
         self._pattern = pattern
-        self._name: str = name
+        self._name: Hashable = name
         self._target = target
         self._aggregation: Aggregation = agg
 
