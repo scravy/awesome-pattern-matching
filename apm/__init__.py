@@ -10,7 +10,7 @@ from .core import \
     Not, \
     OneOf, \
     Pattern, \
-    Many, \
+    Some, \
     Strict, \
     String, \
     StringPattern, \
@@ -46,8 +46,8 @@ from .typefoo import \
     KwArgs, \
     VarArgs
 
-Remaining = Many
-Some = Many
+Remaining = Some
+Many = Some
 
 Object = Items
 

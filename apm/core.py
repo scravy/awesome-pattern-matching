@@ -378,7 +378,7 @@ class Capture(Pattern, Nested):
         return self._pattern
 
 
-class Many(Capturable, Nested, AutoEqHash, AutoRepr):
+class Some(Capturable, Nested, AutoEqHash, AutoRepr):
     def __init__(self, pattern, *,
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
@@ -412,7 +412,7 @@ class Many(Capturable, Nested, AutoEqHash, AutoRepr):
         return True
 
     def descend(self, f):
-        return Many(pattern=f(self.pattern), at_least=self.at_least, at_most=self.at_most)
+        return Some(pattern=f(self.pattern), at_least=self.at_least, at_most=self.at_most)
 
 
 class Strict(Pattern, Nested):
@@ -553,10 +553,10 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
         captures: List[Capture] = []
         if isinstance(current_pattern, Capture):
             ps, p = current_pattern.get_capture_pattern_chain()
-            if isinstance(p, Many):
+            if isinstance(p, Some):
                 current_pattern = p
                 captures = ps
-        if isinstance(current_pattern, Many):
+        if isinstance(current_pattern, Some):
             count = 0
             result_value = []
             while current_pattern.count_ok_wrt_at_most(count + 1):

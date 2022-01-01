@@ -45,11 +45,11 @@ class UnhappyCasesTest(unittest.TestCase):
 
     def test_invalid_values_for_some(self):
         with self.assertRaises(ValueError):
-            Many(..., at_least=2, at_most=1)
+            Some(..., at_least=2, at_most=1)
         with self.assertRaises(ValueError):
-            Many(..., at_least=2, exactly=1)
+            Some(..., at_least=2, exactly=1)
         with self.assertRaises(ValueError):
-            Many(..., at_most=2, exactly=1)
+            Some(..., at_most=2, exactly=1)
 
     def test_invalid_values_for_length(self):
         with self.assertRaises(ValueError):
