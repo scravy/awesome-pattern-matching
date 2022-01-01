@@ -567,19 +567,20 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
 
 def _match_some(it: SeqIterator, current_pattern: Some, next_pattern, *,
                 captures,
-                ctx: MatchContext) -> Union[None, Literal[False], SeqIterator]:
-    it = it.fork()
+                ctx: MatchContext) -> bool:
     count = 0
     result_value = []
     while current_pattern.count_ok_wrt_at_most(count + 1):
         try:
             item = next(it)
         except StopIteration:
-            return None
+            break
         if ctx.match(item, next_pattern, off_the_record=True):
-            return None
+            it.rewind()
+            break
         if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
-            return None
+            it.rewind()
+            break
         ctx.keep()
         if captures:
             result_value.append(item)
@@ -588,7 +589,7 @@ def _match_some(it: SeqIterator, current_pattern: Some, next_pattern, *,
         return False
     for capture in captures:
         capture.capture(result_value, ctx=ctx)
-    return it
+    return True
 
 
 def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
@@ -606,35 +607,8 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
         if isinstance(current_pattern, Some) and len(current_pattern.patterns) > 1:
             raise NotImplementedError
         if isinstance(current_pattern, Some) and len(current_pattern.patterns) == 1:
-            count = 0
-            result_value = []
-            while current_pattern.count_ok_wrt_at_most(count + 1):
-                try:
-                    item = next(it)
-                except StopIteration:
-                    break
-                if ctx.match(item, next_pattern, off_the_record=True):
-                    it.rewind()
-                    break
-                if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
-                    it.rewind()
-                    break
-                ctx.keep()
-                if captures:
-                    result_value.append(item)
-                count += 1
-            if not current_pattern.count_ok_wrt_at_least(count):
+            if not _match_some(it, current_pattern, next_pattern, captures=captures, ctx=ctx):
                 return ctx.no_match()
-            for capture in captures:
-                capture.capture(result_value, ctx=ctx)
-            continue
-        if isinstance(current_pattern, Some) and len(current_pattern.patterns) == -1:
-            advanced_it = _match_some(it, current_pattern, next_pattern, captures=captures, ctx=ctx)
-            if advanced_it is None:
-                break
-            elif advanced_it is False:
-                return ctx.no_match()
-            it = advanced_it
             continue
         try:
             item = next(it)
