@@ -588,7 +588,8 @@ def _match_some(it: SeqIterator, current_pattern, *,
                 if do_break:
                     break
             if _is_a(pattern, Some):
-                if (r := _match_some(it.fork(), pattern, terminators=terminators, ctx=ctx)) is not None:
+                r = _match_some(it.fork(), pattern, terminators=terminators, ctx=ctx)
+                if r is None:
                     do_break = True
                     break
                 it = r
@@ -644,7 +645,8 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
         return ctx.no_match()
     for current_pattern, next_pattern in zip(pattern, chain(pattern[1:], [Not(...)])):
         if _is_a(current_pattern, Some):
-            if (r := _match_some(it, current_pattern, terminators=[next_pattern], ctx=ctx)) is None:
+            r = _match_some(it, current_pattern, terminators=[next_pattern], ctx=ctx)
+            if r is None:
                 return ctx.no_match()
             it = r
             continue
