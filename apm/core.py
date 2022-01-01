@@ -378,12 +378,33 @@ class Capture(Pattern, Nested):
         return self._pattern
 
 
+class SomePatternCompatibilityArgumentsError(ValueError):
+    """
+    v0.23.0 introduced the capability for Some() to match subsequences. Previously it would only match individual items.
+    As a consequence the pattern-argument became an *args. For backwards compatibility one can still specify pattern=
+    when constructing a Some(pattern=...). If there are patterns given via *args as well as via keyword pattern= this
+    exception is raised.
+
+    See also https://github.com/scravy/awesome-pattern-matching/issues/8
+    """
+
+    def __init__(self):
+        super().__init__('Both kwargs-style "patterns" as well as old-style "pattern" specified.')
+
+
 class Some(Capturable, Nested, AutoEqHash, AutoRepr):
-    def __init__(self, pattern, *,
+    def __init__(self, *patterns,
+                 pattern=None,  # for backwards compatibility, see docstring of SomePatternCompatibilityArgumentsError
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
                  exactly: Optional[int] = None):
 
+        if pattern is not None:
+            if patterns:
+                raise SomePatternCompatibilityArgumentsError
+            patterns = [pattern]
+        if not patterns:
+            raise ValueError(f"provided `patterns` are empty")
         if at_most and at_least and at_most < at_least:
             raise ValueError(f"conflicting spec: at_most={at_most} < at_least={at_least}")
         if exactly and at_most:
@@ -394,7 +415,7 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
             at_least = exactly
             at_most = exactly
 
-        self.pattern = pattern
+        self.patterns = patterns
         self.at_least: Optional[int] = at_least
         self.at_most: Optional[int] = at_most
 
@@ -412,7 +433,7 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
         return True
 
     def descend(self, f):
-        return Some(pattern=f(self.pattern), at_least=self.at_least, at_most=self.at_most)
+        return Some(*(f(p) for p in self.patterns), at_least=self.at_least, at_most=self.at_most)
 
 
 class Strict(Pattern, Nested):
@@ -556,7 +577,9 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
             if isinstance(p, Some):
                 current_pattern = p
                 captures = ps
-        if isinstance(current_pattern, Some):
+        if isinstance(current_pattern, Some) and len(current_pattern.patterns) > 1:
+            raise NotImplementedError
+        if isinstance(current_pattern, Some) and len(current_pattern.patterns) == 1:
             count = 0
             result_value = []
             while current_pattern.count_ok_wrt_at_most(count + 1):
@@ -567,7 +590,7 @@ def _match_sequence(value, pattern: Union[tuple, list], *, ctx: MatchContext) ->
                 if ctx.match(item, next_pattern, off_the_record=True):
                     item_queued = True
                     break
-                if not ctx.match(item, current_pattern.pattern, off_the_record=True):
+                if not ctx.match(item, current_pattern.patterns[0], off_the_record=True):
                     item_queued = True
                     break
                 ctx.keep()
