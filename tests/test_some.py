@@ -123,6 +123,17 @@ class Glob(unittest.TestCase):
         ])
         self.assertTrue(result)
 
+    def test_repeating_subsequence(self):
+        result = match(range(1, 7), [
+            1,
+            Some(
+                OneOf(2, 4),
+                OneOf(3, 5)
+            ),
+            6
+        ])
+        self.assertTrue(result)
+
     def test_subsequence_with_captures(self):
         result = match(range(1, 5), [
             "quuz" @ Value(1),
@@ -138,3 +149,19 @@ class Glob(unittest.TestCase):
         self.assertEqual(2, result['foo'])
         self.assertEqual(3, result['bar'])
         self.assertEqual(4, result['qux'])
+
+    def test_repeating_subsequence_with_captures(self):
+        result = match(range(1, 7), [
+            "quuz" @ Value(1),
+            "quux" @ Some(
+                "foo" @ OneOf(2, 4),
+                "bar" @ OneOf(3, 5),
+            ),
+            "qux" @ Value(6),
+        ])
+        self.assertTrue(result)
+        self.assertEqual(1, result['quuz'])
+        self.assertEqual([[2, 3], [4, 5]], result['quux'])
+        self.assertEqual(4, result['foo'])
+        self.assertEqual(5, result['bar'])
+        self.assertEqual(6, result['qux'])
