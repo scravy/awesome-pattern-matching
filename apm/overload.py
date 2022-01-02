@@ -3,14 +3,16 @@ import inspect
 import typing
 from typing import Callable, Dict, List
 
+from .core import MatchResult, apply
 from .error import MatchError
 from .match import match
 
 
 class Match:
-    def __init__(self, pattern, **kwargs):
+    def __init__(self, pattern, *, when: typing.Optional[Callable] = None, **kwargs):
         self._pattern = pattern
         self._kwargs = kwargs
+        self.when = when
 
     def __call__(self, value):
         # typing.get_type_hints requires annotations to be callable, otherwise it bombs out with a TypeError
@@ -41,7 +43,11 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
                     continue
                 annotation = type_hints[name]
                 if isinstance(annotation, Match):
-                    if not annotation(value):
+                    result: MatchResult = annotation(value)
+                    if not result:
+                        matches = False
+                        break
+                    if callable(annotation.when) and not apply(annotation.when, result):
                         matches = False
                         break
                 try:
@@ -53,6 +59,7 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
                     pass
             if not matches:
                 continue
+
             return func(*bound.args, **bound.kwargs)
         raise MatchError(f"No match(args={repr(args)}, kwargs={repr(kwargs)})")
 

@@ -24,6 +24,23 @@ class CaseDistinctionTest(unittest.TestCase):
         self.assertEqual(5, fib(5))
         self.assertEqual(8, fib(6))
 
+    def test_case_distinction_with_when(self):
+        @case_distinction
+        def fib(n: Match('x' @ InstanceOf(int), when=lambda x: x in (0, 1))):
+            return n
+
+        @case_distinction
+        def fib(n):
+            return fib(n - 2) + fib(n - 1)
+
+        self.assertEqual(0, fib(0))
+        self.assertEqual(1, fib(1))
+        self.assertEqual(1, fib(2))
+        self.assertEqual(2, fib(3))
+        self.assertEqual(3, fib(4))
+        self.assertEqual(5, fib(5))
+        self.assertEqual(8, fib(6))
+
     def test_readme_example(self):
         value = 7
 
