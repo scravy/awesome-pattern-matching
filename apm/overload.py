@@ -1,3 +1,4 @@
+import functools
 import inspect
 import typing
 from typing import Callable, Dict, List
@@ -24,6 +25,7 @@ def overload(fn: Callable, func_map: Dict[str, List[Callable]] = {}):
     cases = func_map[qualified_name]
     cases.append(fn)
 
+    @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         for func in func_map[qualified_name]:
             sig: inspect.Signature = inspect.signature(func)
