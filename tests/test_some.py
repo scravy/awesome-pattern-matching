@@ -111,3 +111,30 @@ class Glob(unittest.TestCase):
         self.assertEqual([2, 3, 4, 5], result.a)
         self.assertEqual([], result.b)
         self.assertEqual("MatchResult(matches=True, groups={'a': [2, 3, 4, 5], 'b': []})", repr(result))
+
+    def test_subsequence(self):
+        result = match(range(1, 5), [
+            1,
+            Some(
+                2,
+                3
+            ),
+            4
+        ])
+        self.assertTrue(result)
+
+    def test_subsequence_with_captures(self):
+        result = match(range(1, 5), [
+            "quuz" @ Value(1),
+            "quux" @ Some(
+                "foo" @ Value(2),
+                "bar" @ Value(3),
+            ),
+            "qux" @ Value(4),
+        ])
+        self.assertTrue(result)
+        self.assertEqual(1, result['quuz'])
+        self.assertEqual([[2, 3]], result['quux'])
+        self.assertEqual(2, result['foo'])
+        self.assertEqual(3, result['bar'])
+        self.assertEqual(4, result['qux'])
