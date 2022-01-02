@@ -14,7 +14,3 @@ class Compat(unittest.TestCase):
     def test_some_compat_conflicting_args(self):
         with self.assertRaises(SomePatternCompatibilityArgumentsError):
             Some(1, 2, pattern=3)
-
-    def test_some_compat_no_patterns(self):
-        with self.assertRaises(ValueError):
-            Some()

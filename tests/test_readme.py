@@ -253,3 +253,9 @@ class ReadmeExamples(unittest.TestCase):
             check("Welcome, member of the Doe family!")
         elif match(value, User(_, _)):
             check("Welcome, anyone!")
+
+    def test_some_subsequences(self):
+        self.assertTrue(match([0, 1, 2, 1, 2, 3], [0, Some(1, 2), 3]))
+        self.assertTrue(match([0, [1, 2], [1, 2], 3], [0, Some([1, 2]), 3]))
+        self.assertTrue(match(range(1, 10), [1, 2, 'remaining' @ Remaining()]))
+        self.assertTrue(match([0, 1, 1, 1, 2, 1], [0, Many(1), Remaining(InstanceOf(int))]))

@@ -245,28 +245,9 @@ class Glob(unittest.TestCase):
         self.assertTrue(match(sublists, pattern_sublists))
         self.assertFalse(match(sublists, pattern_subsequences))
 
-    def test_repeating_subsequence_greedy(self):
-        result = match(
-            [0, 1, 2, 1, 2, 3],
-            [0, 'xs' @ Some(...), 3, Remaining(...)]
-        )
+    def test_docstring_examples(self):
+        self.assertTrue(match([0, 1, 2, 1, 2, 3], [0, Some(1, 2), 3]))
+        result = match(range(1, 10), ['123' @ Many(Between(0, 3)), 'xs' @ Remaining()])
         self.assertTrue(result)
-        self.assertEqual([1, 2, 1, 2], result['xs'])
-        result = match(
-            [0, 1, 2, 1, 2, 4],
-            [0, 'xs' @ Some(Check(lambda x: x < 3), greedy=True), Maybe(4), Remaining(...)]
-        )
-        self.assertTrue(result)
-        self.assertEqual([1, 2, 1, 2], result['xs'])
-        result = match(
-            [0, 1, 2, 1, 2, 4],
-            [0, 'xs' @ Some(Check(lambda x: x < 3)), Maybe(2), Remaining(...)]
-        )
-        self.assertTrue(result)
-        self.assertEqual([], result['xs'])
-        result = match(
-            [0, 1, 2, 1, 2, 4],
-            [0, 'xs' @ Some(Check(lambda x: x < 3), greedy=True), Maybe(2), Remaining(...)]
-        )
-        self.assertTrue(result)
-        self.assertEqual([1, 2, 1, 2], result['xs'])
+        self.assertEqual([1, 2, 3], result['123'])
+        self.assertEqual([4, 5, 6, 7, 8, 9], result['xs'])
