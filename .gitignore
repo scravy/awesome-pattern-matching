@@ -45,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.txt
 *.cover
 *.py,cover
 .hypothesis/
@@ -132,3 +133,4 @@ cython_debug/
 
 # Mac
 .DS_Store
+/coverage.txt
