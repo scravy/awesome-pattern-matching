@@ -404,6 +404,34 @@ class SomePatternCompatibilityArgumentsError(ValueError):
 
 
 class Some(Capturable, Nested, AutoEqHash, AutoRepr):
+    """
+    Matches subsequences in a sequence, also known by the names Many and Remaining. Can only be used within sequences
+    (tuples, list, ranges, ...).
+
+    Some can roughly be thought of as Quantification in most regular expression engines:
+    - `0(12)*3` is like `[0, Some(1, 2), 3]`
+    - `0(12)+3` is like `[0, Some(1, 2, at_least=1), 3]`
+    - `01*2` is like `[0, Some(1), 2]`
+
+    When invoked with no arguments is the same as `Some(...)` (like `.*` in regex).
+
+    Examples:
+        >>> match([0, 1, 2, 1, 2, 3], [0, Some(1, 2), 3]))
+        MatchResult(matches=True, groups={})
+
+        >>> match(range(0, 10), ['123' @ Many(Between(0, 3)), 'xs' @ Remaining()])
+        MatchResult(matches=True, groups={'123': [0, 1, 2, 3], 'xs': [4, 5, 6, 7, 8, 9]})
+
+    Args:
+        at_least (int, optional): No default, which is effectively a default of zero.
+        at_most (int, optional): No default.
+        exactly (int, optional): No default.
+        greedy (bool): Whether the match should be greedy. Default: False. This is not the same notion of greediness
+            as in most regular expression engines – it is more greedy than that. The default behavior of Some() is that
+            it will stop looking for matches if it can match the pattern following the Some(). Enabling greediness will
+            make it go on as long as the current pattern matches.
+    """
+
     def __init__(self, *patterns,
                  pattern=None,  # for backwards compatibility, see docstring of SomePatternCompatibilityArgumentsError
                  at_least: Optional[int] = None,
@@ -416,7 +444,7 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
                 raise SomePatternCompatibilityArgumentsError
             patterns = [pattern]
         if not patterns:
-            raise ValueError(f"provided `patterns` are empty")
+            patterns = (...,)
         if at_most and at_least and at_most < at_least:
             raise ValueError(f"conflicting spec: at_most={at_most} < at_least={at_least}")
         if exactly and at_most:
