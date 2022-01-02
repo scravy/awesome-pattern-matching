@@ -660,6 +660,23 @@ Takes the optional values `exactly`, `at_least`, and `at_most` which makes `Some
 either `exactly` _n_ items, `at_least` _n_, or `at_most` _n_ items (`at_least` and `at_most` can be given at the same
 time, but not together with `exactly`).
 
+Note the difference between `Some(1, 2)` and `Some([1, 2])`. The first version matches subsequences, the second
+version matches items which are themselves lists:
+
+```python
+match([0,  1, 2 ,  1, 2 , 3], [0, Some( 1, 2 ), 3])  # matches the subsequence 1, 2 twice
+match([0, [1, 2], [1, 2], 3], [0, Some([1, 2]), 3])  # matches the item [1, 2] twice, which happen to be lists
+```
+
+`Some` also goes by the names of `Many` and `Remaining`, which is sometimes nice to convey meaning:
+
+```python
+match(range(1, 10), [1, 2, 'remaining' @ Remaining()])
+match([0, 1, 1, 1, 2, 1], [0, Many(1), Remaining(InstanceOf(int))])
+```
+
+When used with no arguments, `Some()` is the same as `Some(...)`.
+
 
 ### `Between(lower, upper)`
 
@@ -800,7 +817,7 @@ if result := match("2020-08-27", Transformed(date.fromisoformat, 'date' @ _):
 
 ### `At(path, pattern)`
 
-Checks whether the nested object to be matched satisfied pattern at the given path. The match fails if the given path
+Checks whether the nested object to be matched satisfies pattern at the given path. The match fails if the given path
 can not be resolved.
 
 ```python
