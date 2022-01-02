@@ -330,9 +330,11 @@ elif match(value, User(_, _)):
 
 - 💚 has access to result captures
 - 💚 vanilla python
+- 💔 no case guards
 - 💔 can not return values (since it's a statement, not an expression)
 - 🖤 a bit repetetive
 - 💚 simplest and most easy to understand style
+- 🖤 fastest of them all
 
 ```python
 from apm import *
@@ -363,7 +365,8 @@ elif match(value, {"quux": _ >> 'quux'}).bind(result):
 
 - 💚 has access to result captures
 - 💚 vanilla python
-- 💚 can return values
+- 💚 can return values directly as it is an expression
+- 💚 can use case guards via `when=`
 - 🖤 so terse that it is sometimes hard to read
 
 The expression style is summarized:
@@ -396,6 +399,7 @@ mechanism. It is nevertheless quite readable.
 - 💚 has access to result captures
 - 💚 very readable
 - 💔 can not return values (since it's a statement, not an expression)
+- 💚 can use case guards via `when=`
 - 🖤 misuse of the `try .. except` statement
 
 ```python
@@ -418,6 +422,7 @@ print(user)  # "Jane Doe"
 
 - 💔 does not have access to result captures
 - 💚 very readable
+- 💚 can use case guards via `when=`
 - 💚 can return values
 - 🖤 the most bloated version of all styles
 
@@ -459,13 +464,14 @@ add(1, 2)
 
 ### Terse style
 
-- 💚 has access to wildcard captures
-- 💔 does not have access to named result captures
+- 💚 has access to result captures
+- 💔 no case guards
 - 💚 very concise
 - 💚 can return values
 - 🖤 very readable when formatted nicely
 - 🖤 not so well suited for larger match actions
 - 🖤 does not work nicely with auto-formatting tools
+- 🖤 slowest of them all
 
 As the name indicates the "terse" style is terse. It is inspired by the `pampy`
 pattern matching library and mimics some of its behavior. Despite a slim surface
