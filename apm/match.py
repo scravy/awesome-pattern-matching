@@ -2,8 +2,8 @@ import re
 from itertools import chain
 from typing import Union, Any, Optional
 
-from ._util import invoke
-from .core import MatchResult, MatchContext, transform, _, Underscore, Capture
+from ._util import call
+from .core import MatchResult, MatchContext, transform, _, Underscore, Capture, apply
 from .error import MatchError
 from .no_value import NoValue
 from .patterns import InstanceOf, Regex
@@ -75,12 +75,12 @@ def match(value, pattern=NoValue, *extra,
                 result = match(value, condition)
                 if result:
                     if callable(action):
-                        return invoke(action, result.wildcard_matches())
+                        return apply(action, result)
                     return action
                 acc = []
         if len(acc) == 1:
             if callable(acc[0]):
-                return invoke(acc[0], [])
+                return call(acc[0])
             return acc[0]
         raise MatchError(value)
 

@@ -1,6 +1,6 @@
 import sys
 
-from .core import MatchContext, MatchResult
+from .core import MatchContext, MatchResult, apply
 
 
 class Default(BaseException):
@@ -19,14 +19,14 @@ class NoMatch(BaseException):
 
 
 # noinspection PyPep8Naming
-def Case(pattern):
+def Case(pattern, when=None):
     _, exc, _ = sys.exc_info()
 
     if not isinstance(exc, TryMatch):
         raise TypeError
 
     result = exc.context.match(exc.value, pattern)
-    if result:
+    if result and (when is None or (callable(when) and apply(when, result))):
         exc._matches = True
         # no need to fill in match_stack as well: It is only relevant if there is no match, in which case the
         # result object will not be accessible as we will only have it in an `except ... as result` statement

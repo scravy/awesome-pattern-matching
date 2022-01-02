@@ -36,3 +36,16 @@ class CaseOfTest(unittest.TestCase):
             .of({"Id": Capture(Regex("[0-9]+"), name='id')}, "numeric") \
             .otherwise("non-numeric")
         self.assertEqual("non-numeric", result)
+
+    def test_case_of_when(self):
+        result = case({"foo": 1, "bar": 2}) \
+            .of({'bar': _}, when=lambda bar: bar >= 3, then=">=3") \
+            .of({'bar': _}, when=lambda bar: bar >= 2, then=">=2") \
+            .otherwise('???')
+        self.assertEqual(result, ">=2")
+        result = case({"foo": 1, "bar": 1}) \
+            .of({'bar': _}, when=lambda bar: bar >= 3, then=">=3") \
+            .of({'bar': _}, when=lambda bar: bar >= 2, then=">=2") \
+            .of({'bar': _}, then="bar!") \
+            .otherwise('???')
+        self.assertEqual(result, "bar!")

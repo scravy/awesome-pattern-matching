@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ._util import invoke
+from ._util import call
+from .core import apply
 from .match import match
 
 
@@ -9,11 +10,13 @@ class CaseExpr:
         self._value = value
         self._kwargs = kwargs
 
-    def of(self, pattern, then, **kwargs) -> CaseExpr:
+    def of(self, pattern, then, when=None, **kwargs) -> CaseExpr:
         result = match(self._value, pattern, **{**self._kwargs, **kwargs})
         if result:
+            if callable(when) and not apply(when, result):
+                return self
             if callable(then):
-                return CaseExprEnd(invoke(then, result))
+                return CaseExprEnd(apply(then, result))
             else:
                 return CaseExprEnd(then)
         else:
@@ -21,9 +24,12 @@ class CaseExpr:
 
     def otherwise(self, then):
         if callable(then):
-            return invoke(then, {})
+            return call(then)
         else:
             return then
+
+    def default(self, then):
+        return self.otherwise(then)
 
 
 class CaseExprEnd(CaseExpr):

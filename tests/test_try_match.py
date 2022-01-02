@@ -37,3 +37,31 @@ class TryMatchTest(unittest.TestCase):
             result = 'unknown'
         finally:
             self.assertEqual(result, 'unknown')
+
+    def test_try_match_when(self):
+        result = None
+        try:
+            match({
+                "foo": 1,
+                "bar": 2
+            })
+        except Case({"foo": 'foo' @ _}, when=lambda foo: foo > 3):
+            result = '>3'
+        except Case({"foo": 'foo' @ _}):
+            result = 'foo!'
+        finally:
+            self.assertEqual(result, 'foo!')
+
+    def test_try_match_when_false(self):
+        result = None
+        try:
+            match({
+                "foo": 5,
+                "bar": 1
+            })
+        except Case({"foo": 'foo' @ _}, when=lambda foo: foo > 3):
+            result = '>3'
+        except Case({"foo": 'foo' @ _}):
+            result = 'foo!'
+        finally:
+            self.assertEqual(result, '>3')

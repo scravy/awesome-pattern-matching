@@ -8,9 +8,13 @@ from dataclasses import is_dataclass
 from itertools import chain
 from typing import Optional, List, Dict, Union, Tuple, Callable, Generic, TypeVar, Hashable, Iterable, Type
 
-from ._util import SeqIterator
+from ._util import SeqIterator, call
 from .generic import AutoEqHash, AutoRepr
 from .no_value import NoValue
+
+
+def apply(func, result: MatchResult):
+    return call(func, *result.wildcard_matches(), **result.groups())
 
 
 class WildcardMatch:

@@ -37,14 +37,6 @@ class UtilTests(unittest.TestCase):
     def test_get_return_type_none(self):
         self.assertEqual(None, util.get_return_type(lambda: None))
 
-    def test_invoke(self):
-        args = {
-            "b": 3,
-            "c": 4,
-        }
-        result = util.invoke(lambda a, b: (a, b), args)
-        self.assertEqual((None, 3), result)
-
     def test_get_kwarg_types(self):
         self.assertEqual({"a": int, "b": float, "c": str, "d": str}, util.get_kwarg_types(f))
         self.assertEqual({"a": int, "b": str}, util.get_kwarg_types(g))
@@ -91,3 +83,21 @@ class UtilTests(unittest.TestCase):
         self.assertEqual(2, b)
         self.assertEqual(3, c)
         self.assertEqual(2, d)
+
+    def test_call_overlapping_args(self):
+        def fn(a, /, b, c, *, d, e):
+            return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
+
+        self.assertEqual(1 + 2 + 16 + 32, util.call(fn, 1, 2, 4, 8, c=16, e=32))
+
+    def test_call_empty(self):
+        def fn(a, /, b, c, *, d, e):
+            return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
+
+        self.assertEqual(0, util.call(fn))
+
+    def test_call_kwargs(self):
+        def fn(a, /, b, c, *, d, e):
+            return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
+
+        self.assertEqual(1 + 2 + 4 + 8 + 16, util.call(fn, a=1, b=2, c=4, d=8, e=16))

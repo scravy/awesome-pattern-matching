@@ -48,19 +48,23 @@ def get_return_type(obj) -> Optional[Type]:
     return type_hints.get('return', None)
 
 
-def invoke(func, args: Union[Mapping, Iterable]):
+def call(func, *args, **kwargs):
     code: CodeType = func.__code__
-    argcount = code.co_argcount
-    actual_args = []
-    if isinstance(args, Mapping):
-        for _, name in zip(range(0, argcount), code.co_varnames):
-            arg = args[name] if name in args else None
-            actual_args.append(arg)
-    else:
-        for _, arg in zip(range(0, argcount), chain(args, repeat(None))):
-            actual_args.append(arg)
-
-    return func(*actual_args)
+    final_args = []
+    final_kwargs = {}
+    for ix, name in zip(range(0, code.co_argcount), code.co_varnames):
+        if name in kwargs:
+            final_args.append(kwargs[name])
+        elif ix < len(args):
+            final_args.append(args[ix])
+        else:
+            final_args.append(None)
+    for ix, name in zip(range(0, code.co_kwonlyargcount), code.co_varnames[code.co_argcount:]):
+        if name in kwargs:
+            final_kwargs[name] = kwargs[name]
+        else:
+            final_kwargs[name] = None
+    return func(*final_args, **final_kwargs)
 
 
 class MemoIterator:
