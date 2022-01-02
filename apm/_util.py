@@ -102,6 +102,10 @@ class SeqIterator(Iterator):
     def fork(self) -> SeqIterator:
         return self.__iter__()
 
+    def merge(self, other: SeqIterator):
+        assert self._it is other._it
+        self._ix = other._ix
+
     def rewind(self, steps: int = 1):
         self._ix = max(0, self._ix - steps)
 

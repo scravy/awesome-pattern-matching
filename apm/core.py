@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections.abc as abc
+import dataclasses
 from abc import abstractmethod, ABC
 from copy import copy
 from dataclasses import is_dataclass
@@ -24,21 +25,31 @@ class WildcardMatch:
         return self.value
 
 
+@dataclasses.dataclass(frozen=True)
+class MatchContextProperties:
+    multimatch: bool
+    strict: bool
+
+
 class MatchContext:
-    def __init__(self, *, multimatch: bool, strict: bool):
-        self.groups = {}
-        self.wildcards: Dict[int, WildcardMatch] = {}
-        self.multimatch = multimatch
-        self.strict = strict
-        self._off_the_record = []
-        self._most_recent_record = {}
-        self._match_stack = []
+    def __init__(self, *, multimatch: bool = False, strict: bool = False, _copy_from: Optional[MatchContext] = None):
+        if _copy_from is None:
+            self.groups = {}
+            self.wildcards: Dict[int, WildcardMatch] = {}
+            self.properties = MatchContextProperties(
+                multimatch=multimatch,
+                strict=strict,
+            )
+            self._match_stack = []
+        else:
+            self.groups = {**_copy_from.groups}
+            self.wildcards = {**_copy_from.wildcards}
+            self.properties = _copy_from.properties
+            self._match_stack = [*_copy_from._match_stack]
 
     def __setitem__(self, key, value):
         groups = self.groups
-        if self._off_the_record:
-            groups = self._off_the_record[-1]
-        if self.multimatch:
+        if self.properties.multimatch:
             if key not in groups:
                 groups[key] = []
             groups[key].append(value)
@@ -51,23 +62,13 @@ class MatchContext:
     def __contains__(self, item):
         return item in self.groups
 
-    def keep(self):
-        for k, v in self._most_recent_record.items():
-            self[k] = v
-
-    def _pop_most_recent_record(self):
-        self._most_recent_record = self._off_the_record.pop()
-
-    def match(self, value, pattern, strict=False, off_the_record=False) -> MatchResult:
+    def match(self, value, pattern, strict=False) -> MatchResult:
         deferred: List[Callable] = []
         self._match_stack.append((value, pattern))
         deferred.append(lambda: self._match_stack.pop())
-        if off_the_record:
-            self._off_the_record.append({})
-            deferred.append(self._pop_most_recent_record)
 
         try:
-            strict = strict or self.strict
+            strict = strict or self.properties.strict
 
             if pattern is Ellipsis:
                 return self.matches()
@@ -138,6 +139,15 @@ class MatchContext:
         for wildcard_match in self.wildcards.values():
             wildcard_matches[wildcard_match.index] = wildcard_match.get()
         return wildcard_matches
+
+    def fork(self) -> MatchContext:
+        return MatchContext(_copy_from=self)
+
+    def merge(self, other: MatchContext):
+        assert self.properties is other.properties
+        self.groups.update(other.groups)
+        self.wildcards.update(other.wildcards)
+        self._match_stack = [*other._match_stack]
 
 
 class MatchResult(abc.Mapping):
@@ -523,6 +533,33 @@ class Not(Pattern, Nested):
         return Not(pattern=f(self._pattern))
 
 
+def _is_a(pattern, type_) -> bool:
+    if isinstance(pattern, type_):
+        return True
+    if isinstance(pattern, Capture):
+        _, p = pattern.get_capture_pattern_chain()
+        if isinstance(p, type_):
+            return True
+    return False
+
+
+def _get_as(pattern, type_: Type[T]) -> T:
+    if isinstance(pattern, type_):
+        return pattern
+    if isinstance(pattern, Capture):
+        _, p = pattern.get_capture_pattern_chain()
+        if isinstance(p, type_):
+            return p
+    assert False, f'requested {type_}, but pattern is of type {type(pattern)}'
+
+
+def _get_captures(pattern) -> List[Capture]:
+    if isinstance(pattern, Capture):
+        ps, _ = pattern.get_capture_pattern_chain()
+        return ps
+    return []
+
+
 def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
     to_be_matched = {}
     try:
@@ -565,77 +602,58 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
     return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
 
 
+@dataclasses.dataclass
+class MatchSomeResult:
+    it: SeqIterator
+    ctx: MatchContext
+
+    def merge(self, it: SeqIterator, ctx: MatchContext):
+        it.merge(self.it)
+        ctx.merge(self.ctx)
+
+
 def _match_some(it: SeqIterator, current_pattern, *,
-                terminators: List, ctx: MatchContext) -> Optional[SeqIterator]:
+                terminators: List, ctx: MatchContext) -> Optional[MatchSomeResult]:
+    forked_it = it.fork()
+    forked_ctx = ctx.fork()
+    if _match_subsequence(forked_it, current_pattern, terminators, ctx=forked_ctx):
+        return MatchSomeResult(forked_it, forked_ctx)
+
+
+def _match_subsequence(it: SeqIterator, current_pattern, terminators: List,
+                       *, ctx: MatchContext) -> bool:
     count = 0
-    result_value = []
     captures = _get_captures(current_pattern)
     current_pattern = _get_as(current_pattern, Some)
-    while current_pattern.count_ok_wrt_at_most(count + 1):
-        do_break = False
-        for ix, pattern in enumerate(current_pattern.patterns):
-            try:
+    matches = []
+    try:
+        while current_pattern.count_ok_wrt_at_most(count + 1):
+            subsequence = []
+            for ix, pattern in enumerate(current_pattern.patterns):
                 item = next(it)
-            except StopIteration:
-                do_break = True
-                break
-            if ix == 0:
-                for next_pattern in reversed(terminators):
-                    if ctx.match(item, next_pattern, off_the_record=True):
-                        it.rewind()
-                        do_break = True
-                        break
-                if do_break:
-                    break
-            if _is_a(pattern, Some):
-                r = _match_some(it.fork(), pattern, terminators=terminators, ctx=ctx)
-                if r is None:
-                    do_break = True
-                    break
-                it = r
-            elif not ctx.match(item, pattern, off_the_record=True):
-                it.rewind()
-                do_break = True
-                break
-        if do_break:
-            break
-        ctx.keep()
-        if captures:
-            # noinspection PyUnboundLocalVariable
-            result_value.append(item)
-        count += 1
+                if ix == 0:
+                    for terminator in reversed(terminators):
+                        if ctx.match(item, terminator):
+                            it.rewind()
+                            raise StopIteration
+                if _is_a(pattern, Some):
+                    r = _match_some(it, pattern, terminators=terminators, ctx=ctx)
+                    if r is None:
+                        raise StopIteration
+                    r.merge(it, ctx)
+                elif not ctx.match(item, pattern):
+                    it.rewind()
+                    raise StopIteration
+                subsequence.append(item)
+            matches.append(subsequence[0] if len(subsequence) == 1 else subsequence)
+            count += 1
+    except StopIteration:
+        pass
     if not current_pattern.count_ok_wrt_at_least(count):
-        return None
+        return False
     for capture in captures:
-        capture.capture(result_value, ctx=ctx)
-    return it
-
-
-def _is_a(pattern, type_) -> bool:
-    if isinstance(pattern, type_):
-        return True
-    if isinstance(pattern, Capture):
-        _, p = pattern.get_capture_pattern_chain()
-        if isinstance(p, type_):
-            return True
-    return False
-
-
-def _get_as(pattern, type_: Type[T]) -> T:
-    if isinstance(pattern, type_):
-        return pattern
-    if isinstance(pattern, Capture):
-        _, p = pattern.get_capture_pattern_chain()
-        if isinstance(p, type_):
-            return p
-    assert False, f'requested {type_}, but pattern is of type {type(pattern)}'
-
-
-def _get_captures(pattern) -> List[Capture]:
-    if isinstance(pattern, Capture):
-        ps, _ = pattern.get_capture_pattern_chain()
-        return ps
-    return []
+        capture.capture(matches, ctx=ctx)
+    return True
 
 
 def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
@@ -648,7 +666,7 @@ def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchC
             r = _match_some(it, current_pattern, terminators=[next_pattern], ctx=ctx)
             if r is None:
                 return ctx.no_match()
-            it = r
+            r.merge(it, ctx)
             continue
         try:
             item = next(it)
