@@ -606,6 +606,7 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
 class MatchSomeResult:
     it: SeqIterator
     ctx: MatchContext
+    matches: List
 
     def merge(self, it: SeqIterator, ctx: MatchContext):
         it.merge(self.it)
@@ -616,44 +617,50 @@ def _match_some(it: SeqIterator, current_pattern, *,
                 terminators: List, ctx: MatchContext) -> Optional[MatchSomeResult]:
     forked_it = it.fork()
     forked_ctx = ctx.fork()
-    if _match_subsequence(forked_it, current_pattern, terminators, ctx=forked_ctx):
-        return MatchSomeResult(forked_it, forked_ctx)
+    result = _match_subsequence(forked_it, current_pattern, terminators, ctx=forked_ctx)
+    if result is not None:
+        return MatchSomeResult(forked_it, forked_ctx, result)
 
 
-def _match_subsequence(it: SeqIterator, current_pattern, terminators: List,
-                       *, ctx: MatchContext) -> bool:
+def _match_subsequence(it: SeqIterator, pattern, terminators: List,
+                       *, ctx: MatchContext) -> Optional[List]:
     count = 0
-    captures = _get_captures(current_pattern)
-    current_pattern = _get_as(current_pattern, Some)
+    captures = _get_captures(pattern)
+    pattern = _get_as(pattern, Some)
     matches = []
     try:
-        while current_pattern.count_ok_wrt_at_most(count + 1):
+        while pattern.count_ok_wrt_at_most(count + 1):
             subsequence = []
-            for ix, pattern in enumerate(current_pattern.patterns):
+            ps = pattern.patterns
+            for ix, (current_pattern, next_pattern) in enumerate(zip(ps, chain(ps[1:], [ps[0]]))):
                 item = next(it)
                 if ix == 0:
                     for terminator in reversed(terminators):
                         if ctx.match(item, terminator):
                             it.rewind()
                             raise StopIteration
-                if _is_a(pattern, Some):
-                    r = _match_some(it, pattern, terminators=terminators, ctx=ctx)
+                if _is_a(current_pattern, Some):
+                    r = _match_some(it, current_pattern, terminators=[next_pattern, *terminators], ctx=ctx)
                     if r is None:
                         raise StopIteration
                     r.merge(it, ctx)
-                elif not ctx.match(item, pattern):
-                    it.rewind()
-                    raise StopIteration
-                subsequence.append(item)
+                    subsequence.append(item)
+                    subsequence.extend(r.matches)
+                    continue
+                if ctx.match(item, current_pattern):
+                    subsequence.append(item)
+                    continue
+                it.rewind()
+                raise StopIteration
             matches.append(subsequence[0] if len(subsequence) == 1 else subsequence)
             count += 1
     except StopIteration:
         pass
-    if not current_pattern.count_ok_wrt_at_least(count):
-        return False
+    if not pattern.count_ok_wrt_at_least(count):
+        return None
     for capture in captures:
         capture.capture(matches, ctx=ctx)
-    return True
+    return matches
 
 
 def _match_sequence(value, pattern: Union[tuple, list, Iterable], *, ctx: MatchContext) -> MatchResult:
