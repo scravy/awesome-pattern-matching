@@ -408,7 +408,8 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
                  pattern=None,  # for backwards compatibility, see docstring of SomePatternCompatibilityArgumentsError
                  at_least: Optional[int] = None,
                  at_most: Optional[int] = None,
-                 exactly: Optional[int] = None):
+                 exactly: Optional[int] = None,
+                 greedy: bool = False):
 
         if pattern is not None:
             if patterns:
@@ -429,6 +430,7 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
         self.patterns = patterns
         self.at_least: Optional[int] = at_least
         self.at_most: Optional[int] = at_most
+        self.greedy = greedy
 
     def __eq__(self, other):
         return type(self) == type(other) and self.__dict__ == other.__dict__
@@ -624,17 +626,17 @@ def _match_some(it: SeqIterator, current_pattern, *,
 
 def _match_subsequence(it: SeqIterator, pattern, terminators: List,
                        *, ctx: MatchContext) -> Optional[List]:
-    count = 0
-    captures = _get_captures(pattern)
-    pattern = _get_as(pattern, Some)
+    count: int = 0
+    captures: List[Capture] = _get_captures(pattern)
+    pattern: Some = _get_as(pattern, Some)
     matches = []
     try:
         while pattern.count_ok_wrt_at_most(count + 1):
             subsequence = []
             ps = pattern.patterns
             for ix, (current_pattern, next_pattern) in enumerate(zip(ps, chain(ps[1:], [ps[0]]))):
-                item = next(it)
-                if ix == 0:
+                item = next(it)  # may raise StopIteration
+                if ix == 0 and not pattern.greedy:
                     for terminator in reversed(terminators):
                         if ctx.match(item, terminator):
                             it.rewind()

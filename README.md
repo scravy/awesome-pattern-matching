@@ -519,7 +519,7 @@ if result := match([1, 2, 3, 4], [1, 2, Capture(Remaining(InstanceOf(int)), name
     print(result['tail'])  ## -> [3, 4]
 ```
 
-As this syntax is rather verbose, two short hand notations can be used:
+As this syntax is rather verbose, two shorthand notations can be used:
 
 ```python
 # using the matrix multiplication operator '@' (syntax resembles that of Haskell and Scala)

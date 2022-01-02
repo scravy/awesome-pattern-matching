@@ -234,3 +234,39 @@ class Glob(unittest.TestCase):
         self.assertEqual(4, result['foo'])
         self.assertEqual(5, result['bar'])
         self.assertEqual(6, result['qux'])
+
+    def test_repeating_subsequence_distinction_from_list_items(self):
+        subsequences = [0, 1, 2, 1, 2, 3]
+        sublists = [0, [1, 2], [1, 2], 3]
+        pattern_subsequences = [0, Some(1, 2), 3]
+        pattern_sublists = [0, Some([1, 2]), 3]
+        self.assertTrue(match(subsequences, pattern_subsequences))
+        self.assertFalse(match(subsequences, pattern_sublists))
+        self.assertTrue(match(sublists, pattern_sublists))
+        self.assertFalse(match(sublists, pattern_subsequences))
+
+    def test_repeating_subsequence_greedy(self):
+        result = match(
+            [0, 1, 2, 1, 2, 3],
+            [0, 'xs' @ Some(...), 3, Remaining(...)]
+        )
+        self.assertTrue(result)
+        self.assertEqual([1, 2, 1, 2], result['xs'])
+        result = match(
+            [0, 1, 2, 1, 2, 4],
+            [0, 'xs' @ Some(Check(lambda x: x < 3), greedy=True), Maybe(4), Remaining(...)]
+        )
+        self.assertTrue(result)
+        self.assertEqual([1, 2, 1, 2], result['xs'])
+        result = match(
+            [0, 1, 2, 1, 2, 4],
+            [0, 'xs' @ Some(Check(lambda x: x < 3)), Maybe(2), Remaining(...)]
+        )
+        self.assertTrue(result)
+        self.assertEqual([], result['xs'])
+        result = match(
+            [0, 1, 2, 1, 2, 4],
+            [0, 'xs' @ Some(Check(lambda x: x < 3), greedy=True), Maybe(2), Remaining(...)]
+        )
+        self.assertTrue(result)
+        self.assertEqual([1, 2, 1, 2], result['xs'])
