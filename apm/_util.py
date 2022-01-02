@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 import inspect
+
+try:
+    from collections.abc import Iterator
+except ImportError:
+    from collections import Iterator
 from inspect import CO_VARARGS  # pylint: disable=no-name-in-module
 from itertools import chain, repeat
 from types import CodeType
@@ -54,3 +61,47 @@ def invoke(func, args: Union[Mapping, Iterable]):
             actual_args.append(arg)
 
     return func(*actual_args)
+
+
+class MemoIterator:
+    __slots__ = ('_it', '_elements')
+
+    def __init__(self, it: Iterable):
+        if isinstance(it, (list, tuple)):
+            self._it = iter(tuple())
+            self._elements = it
+        else:
+            self._it = iter(it)
+            self._elements = []
+
+    def at(self, ix: int):
+        while ix >= len(self._elements):
+            elem = next(self._it)  # will raise StopIterator if empty – expected as part of the contract of this method
+            self._elements.append(elem)
+        return self._elements[ix]
+
+
+class SeqIterator(Iterator):
+    __slots__ = ('_it', '_ix')
+
+    def __init__(self, seq: Union[Iterable, MemoIterator], *, from_index: int = 0):
+        self._it = seq if isinstance(seq, MemoIterator) else MemoIterator(seq)
+        self._ix = from_index
+
+    def __next__(self):
+        elem = self._it.at(self._ix)
+        self._ix += 1
+        return elem
+
+    def __iter__(self) -> SeqIterator:
+        return SeqIterator(self._it, from_index=self._ix)
+
+    def fork(self) -> SeqIterator:
+        return self.__iter__()
+
+    def merge(self, other: SeqIterator):
+        assert self._it is other._it
+        self._ix = other._ix
+
+    def rewind(self, steps: int = 1):
+        self._ix = max(0, self._ix - steps)

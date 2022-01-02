@@ -91,7 +91,7 @@ class Glob(unittest.TestCase):
             6,
             7,
             8,
-            9
+            9,
         ])
         self.assertTrue(result)
         self.assertEqual([2, 3, 4], result.a)
@@ -105,9 +105,132 @@ class Glob(unittest.TestCase):
             6,
             7,
             8,
-            9
+            9,
         ])
         self.assertTrue(result)
         self.assertEqual([2, 3, 4, 5], result.a)
         self.assertEqual([], result.b)
         self.assertEqual("MatchResult(matches=True, groups={'a': [2, 3, 4, 5], 'b': []})", repr(result))
+
+    def test_subsequence(self):
+        result = match(range(1, 5), [
+            1,
+            Some(
+                2,
+                3,
+            ),
+            4,
+        ])
+        self.assertTrue(result)
+
+    def test_repeating_subsequence(self):
+        result = match(range(1, 7), [
+            1,
+            Some(
+                OneOf(2, 4),
+                OneOf(3, 5),
+            ),
+            6,
+        ])
+        self.assertTrue(result)
+
+    def test_repeating_subsequence_exactly(self):
+        result = match(range(1, 7), [
+            1,
+            Some(
+                OneOf(2, 4),
+                OneOf(3, 5),
+                exactly=2,
+            ),
+            6,
+        ])
+        self.assertTrue(result)
+
+    def test_repeating_subsequence_exactly_stop(self):
+        result = match(range(1, 7), [
+            1,
+            Some(
+                OneOf(2, 4),
+                OneOf(3, 5),
+                exactly=1,
+            ),
+            4,
+            5,
+            6,
+        ])
+        self.assertTrue(result)
+
+    def test_repeating_subsequence_exactly_stop_with_captures(self):
+        result = match(range(1, 7), [
+            1,
+            "many" @ Some(
+                OneOf(2, 4),
+                OneOf(3, 5),
+                exactly=1,
+            ),
+            4,
+            5,
+            6,
+        ])
+        self.assertTrue(result)
+        self.assertEqual([[2, 3]], result['many'])
+
+    def test_repeating_subsequence_at_most_stop_with_captures(self):
+        result = match(range(1, 9), [
+            1,
+            "many" @ Some(
+                OneOf(2, 4, 6),
+                OneOf(3, 5, 7),
+                at_most=2,
+            ),
+            6,
+            7,
+            8,
+        ])
+        self.assertTrue(result)
+        self.assertEqual([[2, 3], [4, 5]], result['many'])
+
+    def test_repeating_subsequence_at_most_stop_with_captures_unhappy_path(self):
+        result = match(range(1, 9), [
+            1,
+            "many" @ Some(
+                OneOf(2, 4, 6),
+                OneOf(3, 5, 7),
+                at_most=2,
+            ),
+            6,
+            7,
+        ])
+        self.assertFalse(result)
+
+    def test_subsequence_with_captures(self):
+        result = match(range(1, 5), [
+            "quuz" @ Value(1),
+            "quux" @ Some(
+                "foo" @ Value(2),
+                "bar" @ Value(3),
+            ),
+            "qux" @ Value(4),
+        ])
+        self.assertTrue(result)
+        self.assertEqual(1, result['quuz'])
+        self.assertEqual([[2, 3]], result['quux'])
+        self.assertEqual(2, result['foo'])
+        self.assertEqual(3, result['bar'])
+        self.assertEqual(4, result['qux'])
+
+    def test_repeating_subsequence_with_captures(self):
+        result = match(range(1, 7), [
+            "quuz" @ Value(1),
+            "quux" @ Some(
+                "foo" @ OneOf(2, 4),
+                "bar" @ OneOf(3, 5),
+            ),
+            "qux" @ Value(6),
+        ])
+        self.assertTrue(result)
+        self.assertEqual(1, result['quuz'])
+        self.assertEqual([[2, 3], [4, 5]], result['quux'])
+        self.assertEqual(4, result['foo'])
+        self.assertEqual(5, result['bar'])
+        self.assertEqual(6, result['qux'])

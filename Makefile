@@ -1,4 +1,6 @@
-test: lint
+test: lint unittest
+
+unittest:
 	python3 -m unittest -v
 
 coverage:
