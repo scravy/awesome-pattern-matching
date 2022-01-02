@@ -28,9 +28,6 @@ class CaseExpr:
         else:
             return then
 
-    def default(self, then):
-        return self.otherwise(then)
-
 
 class CaseExprEnd(CaseExpr):
 
