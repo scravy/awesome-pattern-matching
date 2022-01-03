@@ -100,6 +100,48 @@ extracted_value = match(given, Record(_, "An object", 'value' @ Between(100, 200
 ```
 
 
+### Case guards
+
+A case in PEP-634 `match` can have an `if` attached like that:
+
+```
+match point:
+    case Point(x, y) if x == y:
+        ...
+```
+
+_`apm`_ supports case guards too:
+
+```
+case(point) \
+    .of(Point('x' @ _, 'y' @ _), when=lambda x, y: x == y, then=...) \
+    .otherwise(None)
+```
+
+Though it is arguable whether it's proper support as for example the _simple_
+style already uses `if` statements to emulate the sequenced `match`.
+
+However, often there is no need for case guards as it is often more comfortable to
+use custom patterns or a pattern from the library of pre-defined patterns. For example
+the following PEP-634 match:
+
+```
+match point:
+    case Point(x, 0) if 200 <= x <= 300:
+        ...
+```
+
+Can be done without a case guard at all:
+
+```
+if match(point, Point('x' @ Between(200, 300), 0):
+    ...
+```
+
+This also illustrates one of the strengths of _`apm`_: Reusable patterns can
+be defined and composed.
+
+
 ## In-Depth comparison
 
 An in-depth comparison of the two can be found in this python script that compares the [PEP-636](https://www.python.org/dev/peps/pep-0636/) examples with the different _`apm`_
