@@ -58,6 +58,9 @@ Both PEP-634  and _`apm`_ can match all kinds of patterns:
 | `["north"] | ["go", "north"]` | `OneOf(["north"], ["go", "north"])` |
 | `["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]` | `OneOf(["get", 'obj' @ _], ["pick", "up", 'obj' @ _], ["pick", 'obj' @ _, "up"])` |
 | `["go", ("north" | "south" | "east" | "west") as direction]` | `["go", 'direction' @ OneOf("north", "south", "east", "west")]` |
+| `[a, b, *rest]` | `['a' @ _, 'b' @ _, Remaining('rest' @ _)]` |
+| `{"foo": a, "bar": b, **rest}` | `{"foo": 'a' @ _, "bar": 'b' @ _} ** Remainder('rest' @ _)` |
+| `{"foo": str(x)}` | `{"foo": 'x' @ InstanceOf(str)}` |
 
 
 ### Matching data classes
