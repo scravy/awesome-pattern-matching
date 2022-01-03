@@ -21,6 +21,9 @@ install:
 clean:
 	rm -rf build dist *.egg-info
 
+doctoc:
+	doctoc README.md
+
 dist: clean
 	python3 setup.py sdist bdist_wheel
 
