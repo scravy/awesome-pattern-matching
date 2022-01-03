@@ -846,7 +846,7 @@ result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="
 
 ### `Items(**kwargs))`
 
-Mostly syntactic sugar to match a dictionary nicely (and anything that provied an `.items()` method).
+Mostly syntactic sugar to match a dictionary nicely (and anything that provides an `.items()` method).
 
 ```python
 from apm import *
