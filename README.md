@@ -900,8 +900,8 @@ if result := match(request, Items(
 
 ### `Object(type, *args, **kwargs)`
 
-Matches any object of the specific type with the given attrs as in `**kwargs`. `*attrs` respects the
-`__match_args__` introduced by PEP-634.
+Matches any object of the specific type with the given attrs as in `**kwargs`.
+It respects the `__match_args__` introduced by PEP-634.
 
 ```python
 from apm import *
