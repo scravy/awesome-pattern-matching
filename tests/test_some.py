@@ -252,6 +252,8 @@ class Glob(unittest.TestCase):
         self.assertEqual([1, 2, 3], result['123'])
         self.assertEqual([4, 5, 6, 7, 8, 9], result['xs'])
 
-    # def test_subsequence_not_matching(self):
-    #     self.assertTrue(match([0, 1, 2, 2, 1, 2, 2, 4], [0, Some(1, Some(2, 2, at_least=1), at_least=2), 4]))
-    #     # self.assertFalse(match([0, 1, 2, 2, 1, 2, 3, 4], [0, Some(1, Some(2, 2, at_least=1), at_least=2), 4]))
+    def test_subsequence_not_matching(self):
+        self.assertTrue(match([0, 1, 2, 2, 1, 2, 2, 4], [0, Some(1, Some(2, 2, at_least=1), at_least=2), 4]))
+
+    def test_subsequence_not_matching_unhappy_path(self):
+        self.assertFalse(match([0, 1, 2, 2, 1, 2, 3, 4], [0, Some(1, Some(2, 2, at_least=1), at_least=2), 4]))

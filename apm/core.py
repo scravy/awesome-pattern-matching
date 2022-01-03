@@ -706,11 +706,11 @@ def _match_subsequence(it: SeqIterator, pattern, terminators: List,
                             it.rewind()
                             raise StopIteration
                 if _is_a(current_pattern, Some):
+                    it.rewind()
                     r = _match_some(it, current_pattern, terminators=[next_pattern, *terminators], ctx=ctx)
                     if r is None:
                         raise StopIteration
                     r.merge(it, ctx)
-                    subsequence.append(item)
                     subsequence.extend(r.matches)
                     continue
                 if ctx.match(item, current_pattern):

@@ -49,6 +49,7 @@ class TransformTest(unittest.TestCase):
             Arguments(foo=int, bar=float),
             Returns(str),
             Object(SomeClass, 8, bar='quuz'),
+            {"foo": 1} ** Remainder(...),
             [1, 2, 3],
             "foo",
             1.0,
