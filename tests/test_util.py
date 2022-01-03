@@ -85,19 +85,19 @@ class UtilTests(unittest.TestCase):
         self.assertEqual(2, d)
 
     def test_call_overlapping_args(self):
-        def fn(a, /, b, c, *, d, e):
+        def fn(a, b, c, *, d, e):
             return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
 
         self.assertEqual(1 + 2 + 16 + 32, util.call(fn, 1, 2, 4, 8, c=16, e=32))
 
     def test_call_empty(self):
-        def fn(a, /, b, c, *, d, e):
+        def fn(a, b, c, *, d, e):
             return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
 
         self.assertEqual(0, util.call(fn))
 
     def test_call_kwargs(self):
-        def fn(a, /, b, c, *, d, e):
+        def fn(a, b, c, *, d, e):
             return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0)
 
         self.assertEqual(1 + 2 + 4 + 8 + 16, util.call(fn, a=1, b=2, c=4, d=8, e=16))
