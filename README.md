@@ -369,7 +369,7 @@ elif match(value, {"quux": _ >> 'quux'}).bind(result):
 - 💚 has access to result captures
 - 💚 vanilla python
 - 💚 can return values directly as it is an expression
-- 💚 can use case guards via `when=`
+- 💚 can use case guards via `when=` or `guarded`
 - 🖤 so terse that it is sometimes hard to read
 
 The expression style is summarized:
@@ -468,7 +468,7 @@ add(1, 2)
 ### Terse style
 
 - 💚 has access to result captures
-- 💔 no case guards
+- 💚 can use case guards via `guarded`
 - 💚 very concise
 - 💚 can return values
 - 🖤 very readable when formatted nicely
