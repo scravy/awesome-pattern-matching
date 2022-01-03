@@ -75,3 +75,31 @@ class DictionaryMatchingTests(unittest.TestCase):
             Regex(r"f[0-9]+"): InstanceOf(float),
             _: InstanceOf(bool),
         }))
+
+    def test_remainder(self):
+        result = match({
+            "foo": 1,
+            "bar": 2,
+            "qux": 4,
+            "quuz": 8,
+        }, {"foo": 'foo' @ _, "bar": 'bar' @ _} ** Remainder('rs' @ _))
+        self.assertTrue(result)
+        self.assertEqual(1, result.foo)
+        self.assertEqual(2, result.bar)
+        self.assertEqual(4, result.rs['qux'])
+        self.assertEqual(8, result.rs['quuz'])
+
+    def test_remainder_check(self):
+        result = match({
+            "foo": 1,
+            "bar": 2,
+            "qux": 4,
+            "quuz": 8,
+        }, {"foo": 'foo' @ _, "bar": 'bar' @ _} ** Remainder(Check(lambda x: not x)))
+        self.assertFalse(result)
+
+        result = match({
+            "foo": 1,
+            "bar": 2,
+        }, {"foo": 'foo' @ _, "bar": 'bar' @ _} ** Remainder(Check(lambda x: not x)))
+        self.assertTrue(result)

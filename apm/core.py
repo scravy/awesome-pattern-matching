@@ -94,7 +94,7 @@ class MatchContext:
                     return self.no_match()
                 return _match_mapping(value.__dict__, pattern_dict, ctx=self, strict=strict)
 
-            if type(pattern) == dict:
+            if type(pattern) in (dict, Remainder):
                 return _match_mapping(value, pattern, ctx=self, strict=strict)
 
             if type(pattern) == tuple:
@@ -485,6 +485,21 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
         return Some(*(f(p) for p in self.patterns), at_least=self.at_least, at_most=self.at_most)
 
 
+class Remainder(Nested, AutoEqHash, AutoRepr):
+    def __init__(self, pattern):
+        self.pattern = pattern
+        self.left = NoValue
+
+    def descend(self, f):
+        r = Remainder(f(self.pattern))
+        r.left = f(self.left)
+        return r
+
+    def __rpow__(self, left):
+        self.left = left
+        return self
+
+
 class Strict(Pattern, Nested):
     def __init__(self, pattern):
         self._pattern = pattern
@@ -598,8 +613,13 @@ def _get_captures(pattern) -> List[Capture]:
     return []
 
 
-def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> MatchResult:
+def _match_mapping(value, pattern: Union[dict, Remainder], *, ctx: MatchContext, strict: bool) -> MatchResult:
+    remainder = NoValue
+    if isinstance(pattern, Remainder):
+        remainder = pattern
+        pattern = pattern.left
     to_be_matched = {}
+    matched = set()
     try:
         items = value.items()
     except (AttributeError, TypeError):
@@ -618,6 +638,7 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
         result = ctx.match(val, val_pattern)
         if not result:
             return result
+        matched.add(key)
         del to_be_matched[key]
     possibly_mismatching_keys = set()
     for key_pattern, val_pattern in patterns:
@@ -636,8 +657,15 @@ def _match_mapping(value, pattern: dict, *, ctx: MatchContext, strict: bool) -> 
                     if not isinstance(p, Underscore):
                         possibly_mismatching_keys.add(key)
         for key in keys_to_remove:
+            matched.add(key)
             del to_be_matched[key]
-    return ctx.match_if(not possibly_mismatching_keys and (not strict or not to_be_matched))
+    if possibly_mismatching_keys or (strict and to_be_matched):
+        return ctx.no_match()
+    if remainder is not NoValue:
+        remaining = {k: v for k, v in items if k not in matched}
+        if not ctx.match(remaining, remainder.pattern, strict=strict):
+            return ctx.no_match()
+    return ctx.matches()
 
 
 @dataclasses.dataclass

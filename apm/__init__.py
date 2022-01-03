@@ -10,6 +10,7 @@ from .core import \
     Not, \
     OneOf, \
     Pattern, \
+    Remainder, \
     Some, \
     Strict, \
     String, \
@@ -63,6 +64,7 @@ __all__ = [
     'Not',
     'OneOf',
     'Pattern',
+    'Remainder',
     'Remaining',
     'Some',
     'Strict',
