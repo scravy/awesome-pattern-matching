@@ -249,6 +249,26 @@ class Attrs(Pattern, Nested):
         return Attrs(**items)
 
 
+class Object(Pattern, Nested):
+    def __init__(self, type_, *args, **kwargs):
+        self._type = type_
+        self._kwargs = kwargs
+        if args and hasattr(self._type, '__match_args__'):
+            for ix, arg in enumerate(self._type.__match_args__):
+                if ix >= len(args):
+                    break
+                self._kwargs[arg] = args[ix]
+
+    def match(self, value, *, ctx: MatchContext, strict: bool) -> MatchResult:
+        if not isinstance(value, self._type):
+            return ctx.no_match()
+        attrs = {k: getattr(value, k) for k, v in self._kwargs.items() if hasattr(value, k)}
+        return ctx.match(attrs, self._kwargs, strict=strict)
+
+    def descend(self, f):
+        return Object(self._type, **{k: f(v) for k, v in self._kwargs.items()})
+
+
 # noinspection PyPep8Naming
 def NoneOf(*args) -> Pattern:
     return ~OneOf(args)

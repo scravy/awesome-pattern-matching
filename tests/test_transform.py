@@ -24,6 +24,14 @@ def record_type(s):
     return f
 
 
+class SomeClass:
+    __match_args__ = ["foo", "bar"]
+
+    def __init__(self, foo, bar):
+        self.foo = foo
+        self.bar = bar
+
+
 class TransformTest(unittest.TestCase):
 
     def test_transform(self):
@@ -40,6 +48,7 @@ class TransformTest(unittest.TestCase):
             At(path=["foo", "bar"], pattern=...),
             Arguments(foo=int, bar=float),
             Returns(str),
+            Object(SomeClass, 8, bar='quuz'),
             [1, 2, 3],
             "foo",
             1.0,

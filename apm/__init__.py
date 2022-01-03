@@ -35,6 +35,7 @@ from .patterns import \
     Length, \
     Maybe, \
     NoneOf, \
+    Object, \
     Items, \
     Regex, \
     Returns, \
@@ -48,8 +49,6 @@ from .typefoo import \
 
 Remaining = Some
 Many = Some
-
-Object = Items
 
 __all__ = [
     'agg',
