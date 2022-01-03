@@ -86,7 +86,8 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Not(pattern)`](#notpattern)
   - [`Each(pattern [, at_least=]`](#eachpattern--at_least)
   - [`EachItem(key_pattern, value_pattern)`](#eachitemkey_pattern-value_pattern)
-  - [`Some(pattern)`](#somepattern)
+  - [`Some(pattern)` (aka `Many` and `Remaining`)](#somepattern-aka-many-and-remaining)
+  - [`Remainder(pattern)`](#remainderpattern)
   - [`Between(lower, upper)`](#betweenlower-upper)
   - [`Length(length)`](#lengthlength)
   - [`Contains(item)`](#containsitem)
@@ -99,6 +100,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Transformed(function, pattern)`](#transformedfunction-pattern)
   - [`At(path, pattern)`](#atpath-pattern)
   - [`Items(**kwargs))`](#itemskwargs)
+  - [`Object(type, *args, **kwargs)`](#objecttype-args-kwargs)
 - [Extensible](#extensible)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -682,6 +684,26 @@ match([0, 1, 1, 1, 2, 1], [0, Many(1), Remaining(InstanceOf(int))])
 ```
 
 When used with no arguments, `Some()` is the same as `Some(...)`.
+
+
+### `Remainder(pattern)`
+
+Can be used to match the unmatched parts of a Dictionary/Mapping.
+
+```python
+result = match({
+    "foo": 1,
+    "bar": 2,
+    "qux": 4,
+    "quuz": 8,
+}, {"foo": 'foo' @ _, "bar": 'bar' @ _} ** Remainder('rs' @ _))
+print(result.foo)  # 1
+print(result.bar)  # 2
+print(result.rs)   # {'qux': 4, 'quuz': 8}
+```
+
+`Remainder` is, strictly speaking, not a `Pattern` and only works in conjunction with `**` on dictionaries,
+and it only works on the right-hand side of the dictionary.
 
 
 ### `Between(lower, upper)`
