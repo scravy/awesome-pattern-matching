@@ -17,6 +17,7 @@ from .core import \
     Value, \
     _
 from .error import MatchError
+from .guarded import guarded
 from .match import match
 from .overload import case_distinction, Match
 from .patterns import \
@@ -73,6 +74,7 @@ __all__ = [
 
     'case',
     'match',
+    'guarded',
     'case_distinction',
     'Match',
     'MatchError',

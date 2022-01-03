@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ._util import call
 from .core import apply
+from .guarded import Guarded, NoGuardSucceeded
 from .match import match
 
 
@@ -15,6 +16,11 @@ class CaseExpr:
         if result:
             if callable(when) and not apply(when, result):
                 return self
+            if isinstance(then, Guarded):
+                try:
+                    return CaseExprEnd(then.evaluate(result))
+                except NoGuardSucceeded:
+                    return self
             if callable(then):
                 return CaseExprEnd(apply(then, result))
             else:

@@ -5,6 +5,7 @@ from typing import Union, Any, Optional
 from ._util import call
 from .core import MatchResult, MatchContext, transform, _, Underscore, Capture, apply
 from .error import MatchError
+from .guarded import Guarded, NoGuardSucceeded
 from .no_value import NoValue
 from .patterns import InstanceOf, Regex
 from .try_match import TryMatch
@@ -72,12 +73,18 @@ def match(value, pattern=NoValue, *extra,
             acc.append(transform(p, _autopattern))
             if len(acc) == 2:
                 condition, action = acc
+                acc.clear()
                 result = match(value, condition)
                 if result:
-                    if callable(action):
+                    if isinstance(action, Guarded):
+                        try:
+                            return action.evaluate(result)
+                        except NoGuardSucceeded:
+                            continue
+                    elif callable(action):
                         return apply(action, result)
-                    return action
-                acc = []
+                    else:
+                        return action
         if len(acc) == 1:
             if callable(acc[0]):
                 return call(acc[0])
