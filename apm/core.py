@@ -181,6 +181,9 @@ class MatchResult(abc.Mapping):
     def __len__(self):
         return len(self._context.groups)
 
+    def get(self, key, default=None):
+        return self._context.groups.get(key, default)
+
     def items(self):
         return self._context.groups.items()
 

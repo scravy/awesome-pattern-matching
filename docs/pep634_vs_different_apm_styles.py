@@ -2,35 +2,39 @@ from __future__ import annotations
 
 import os
 from abc import abstractmethod
+from enum import Enum, auto
 from timeit import timeit
-from typing import Optional, Type, List, TypeVar
+from typing import Optional, Type, List, TypeVar, Generic, get_args
 
 from apm import *
+from apm.no_value import NoValue
 
 ROUNDS = int(os.environ.get('ROUNDS', '1000'))
 
 DETAILED = bool(os.environ.get('DETAILED', '').lower() in ('yes', 'true', 'on', '1', 'enabled'))
 
+T = TypeVar('T')
 
-class Example:
+
+class Example(Generic[T]):
     @abstractmethod
-    def pep634(self, command: str) -> Optional[str]:
+    def pep634(self, arg: T) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
-    def apm(self, command: str) -> Optional[str]:
+    def apm(self, arg: T) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
-    def apm_expression(self, command: str) -> Optional[str]:
+    def apm_expression(self, arg: T) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
-    def apm_statement(self, command: str) -> Optional[str]:
+    def apm_statement(self, arg: T) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
-    def apm_terse(self, command: str) -> Optional[str]:
+    def apm_terse(self, arg: T) -> Optional[str]:
         raise NotImplementedError
 
 
@@ -45,7 +49,7 @@ def example(clazz: Type[T]) -> Type[T]:
 
 
 @example
-class MatchingSequences(Example):
+class MatchingSequences(Example[str]):
 
     def pep634(self, command):
         match command.split():
@@ -77,7 +81,7 @@ class MatchingSequences(Example):
 
 
 @example
-class MatchingMultiplePatterns(Example):
+class MatchingMultiplePatterns(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -117,7 +121,7 @@ class MatchingMultiplePatterns(Example):
 
 
 @example
-class MatchingSpecificValues(Example):
+class MatchingSpecificValues(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -173,7 +177,7 @@ class MatchingSpecificValues(Example):
 
 
 @example
-class MatchingMultipleValues(Example):
+class MatchingMultipleValues(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -204,7 +208,7 @@ class MatchingMultipleValues(Example):
 
 
 @example
-class AddingAWildcard(Example):
+class AddingAWildcard(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -255,7 +259,7 @@ class AddingAWildcard(Example):
 
 
 @example
-class OrPatterns(Example):
+class OrPatterns(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -297,7 +301,7 @@ class OrPatterns(Example):
 
 
 @example
-class CapturingMatchedSubPatterns(Example):
+class CapturingMatchedSubPatterns(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -328,7 +332,7 @@ class CapturingMatchedSubPatterns(Example):
 
 
 @example
-class AddingConditionsToPatterns(Example):
+class AddingConditionsToPatterns(Example[str]):
 
     def pep634(self, command: str) -> Optional[str]:
         match command.split():
@@ -366,29 +370,250 @@ class AddingConditionsToPatterns(Example):
         raise NotImplementedError
 
 
-class NoResult:
-    pass
+class Button(Enum):
+    LEFT = auto()
+    MIDDLE = auto()
+    RIGHT = auto()
+
+
+class Click:
+    __match_args__ = ("position", "button")
+
+    def __init__(self, pos, btn):
+        self.position = pos
+        self.button = btn
+
+
+class Event:
+    def __init__(self, o):
+        self._o = o
+
+    def get(self):
+        return self._o
+
+
+@example
+class MatchingPositionalAttributes(Example[Event]):
+
+    def pep634(self, event: Event) -> Optional[str]:
+        match event.get():
+            case Click((x, y)):
+                return f"handle_click({x}, {y})"
+
+    def apm(self, event: Event) -> Optional[str]:
+        if result := match(event.get(), Object(Click, ('x' @ _, 'y' @ _))):
+            return f"handle_click({result.x}, {result.y})"
+
+    def apm_expression(self, event: Event) -> Optional[str]:
+        return case(event.get()) \
+            .of(Object(Click, ('x' @ _, 'y' @ _)), lambda x, y: f"handle_click({x}, {y})") \
+            .otherwise(None)
+
+    def apm_statement(self, event: Event) -> Optional[str]:
+        try:
+            match(event.get())
+        except Case(Object(Click, ('x' @ _, 'y' @ _))) as result:
+            return f"handle_click({result.x}, {result.y})"
+        except Default:
+            pass
+
+    def apm_terse(self, event: Event) -> Optional[str]:
+        return match(event.get(),
+                     Object(Click, ('x' @ _, 'y' @ _)), lambda x, y: f"handle_click({x}, {y})",
+                     None)
+
+
+@example
+class MatchingAgainstConstantsAndEnums(Example[Event]):
+
+    def pep634(self, event: Event) -> Optional[str]:
+        match event.get():
+            case Click((x, y), button=Button.LEFT):  # This is a left click
+                return f"handle_click({x}, {y})"
+            case Click():
+                return "ignore_other_clicks"
+
+    def apm(self, event: Event) -> Optional[str]:
+        if result := match(event.get(), Object(Click, ('x' @ _, 'y' @ _), button=Button.LEFT)):
+            return f"handle_click({result.x}, {result.y})"
+        if match(event.get(), Object(Click)):
+            return "ignore_other_clicks"
+
+    def apm_expression(self, event: Event) -> Optional[str]:
+        return case(event.get()) \
+            .of(Object(Click, ('x' @ _, 'y' @ _), button=Button.LEFT), lambda x, y: f"handle_click({x}, {y})") \
+            .of(Object(Click), "ignore_other_clicks") \
+            .otherwise(None)
+
+    def apm_statement(self, event: Event) -> Optional[str]:
+        try:
+            match(event.get())
+        except Case(Object(Click, ('x' @ _, 'y' @ _), button=Button.LEFT)) as result:
+            return f"handle_click({result.x}, {result.y})"
+        except Case(Object(Click)):
+            return "ignore_other_clicks"
+        except Default:
+            pass
+
+    def apm_terse(self, event: Event) -> Optional[str]:
+        return match(event.get(),
+                     Object(Click, ('x' @ _, 'y' @ _), button=Button.LEFT), lambda x, y: f"handle_click({x}, {y})",
+                     Object(Click), "ignore_other_clicks",
+                     None)
+
+
+@example
+class GoingToTheCloudMapping(Example[dict]):
+
+    def pep634(self, action: dict) -> Optional[str]:
+        match action:
+            case {"text": message, "color": c}:
+                return f"set_text_color({c}); display('{message}');"
+            case {"sleep": duration}:
+                return f"wait({duration});"
+            case {"sound": url, "format": "ogg"}:
+                return f"play('{url}');"
+            case {"sound": _, "format": _}:
+                return "warning: unsupported audio format"
+
+    def apm(self, action: dict) -> Optional[str]:
+        if result := match(action, {"text": 'message' @ _, "color": 'c' @ _}):
+            return f"set_text_color({result.c}); display('{result.message}');"
+        if result := match(action, {"sleep": 'duration' @ _}):
+            return f"wait({result.duration});"
+        if result := match(action, {"sound": 'url' @ _, "format": "ogg"}):
+            return f"play('{result.url}');"
+        if match(action, {"sound": _, "format": _}):
+            return "warning: unsupported audio format"
+
+    def apm_expression(self, action: dict) -> Optional[str]:
+        return case(action) \
+            .of({"text": 'message' @ _, "color": 'c' @ _},
+                lambda c, message: f"set_text_color({c}); display('{message}');") \
+            .of({"sleep": 'duration' @ _},
+                lambda duration: f"wait({duration});") \
+            .of({"sound": 'url' @ _, "format": "ogg"},
+                lambda url: f"play('{url}');") \
+            .of({"sound": _, "format": _},
+                "warning: unsupported audio format") \
+            .otherwise(None)
+
+    def apm_statement(self, action: dict) -> Optional[str]:
+        try:
+            match(action)
+        except Case({"text": 'message' @ _, "color": 'c' @ _}) as result:
+            return f"set_text_color({result.c}); display('{result.message}');"
+        except Case({"sleep": 'duration' @ _}) as result:
+            return f"wait({result.duration});"
+        except Case({"sound": 'url' @ _, "format": "ogg"}) as result:
+            return f"play('{result.url}');"
+        except Case({"sound": _, "format": _}):
+            return "warning: unsupported audio format"
+        except Default:
+            pass
+
+    def apm_terse(self, action: dict) -> Optional[str]:
+        return match(action,
+                     {"text": 'message' @ _, "color": 'c' @ _},
+                     lambda c, message: f"set_text_color({c}); display('{message}');",
+                     {"sleep": 'duration' @ _}, lambda duration: f"wait({duration});",
+                     {"sound": 'url' @ _, "format": "ogg"}, lambda url: f"play('{url}');",
+                     {"sound": _, "format": _}, "warning: unsupported audio format",
+                     None)
+
+
+@example
+class MatchingBuiltinClasses(Example[dict]):
+
+    def pep634(self, action: dict) -> Optional[str]:
+        match action:
+            case {"text": str(message), "color": str(c)}:
+                return f"set_text_color({c}); display('{message}');"
+            case {"sleep": float(duration)}:
+                return f"wait({duration});"
+            case {"sound": str(url), "format": "ogg"}:
+                return f"play('{url}');"
+            case {"sound": _, "format": _}:
+                return "warning: unsupported audio format"
+
+    def apm(self, action: dict) -> Optional[str]:
+        if result := match(action, {"text": 'message' @ InstanceOf(str), "color": 'c' @ InstanceOf(str)}):
+            return f"set_text_color({result.c}); display('{result.message}');"
+        if result := match(action, {"sleep": 'duration' @ InstanceOf(float)}):
+            return f"wait({result.duration});"
+        if result := match(action, {"sound": 'url' @ InstanceOf(str), "format": "ogg"}):
+            return f"play('{result.url}');"
+        if match(action, {"sound": _, "format": _}):
+            return "warning: unsupported audio format"
+
+    def apm_expression(self, action: dict) -> Optional[str]:
+        return case(action) \
+            .of({"text": 'message' @ InstanceOf(str), "color": 'c' @ InstanceOf(str)},
+                lambda c, message: f"set_text_color({c}); display('{message}');") \
+            .of({"sleep": 'duration' @ InstanceOf(float)},
+                lambda duration: f"wait({duration});") \
+            .of({"sound": 'url' @ InstanceOf(str), "format": "ogg"},
+                lambda url: f"play('{url}');") \
+            .of({"sound": _, "format": _},
+                "warning: unsupported audio format") \
+            .otherwise(None)
+
+    def apm_statement(self, action: dict) -> Optional[str]:
+        try:
+            match(action)
+        except Case({"text": 'message' @ InstanceOf(str), "color": 'c' @ InstanceOf(str)}) as result:
+            return f"set_text_color({result.c}); display('{result.message}');"
+        except Case({"sleep": 'duration' @ InstanceOf(float)}) as result:
+            return f"wait({result.duration});"
+        except Case({"sound": 'url' @ InstanceOf(str), "format": "ogg"}) as result:
+            return f"play('{result.url}');"
+        except Case({"sound": _, "format": _}):
+            return "warning: unsupported audio format"
+        except Default:
+            pass
+
+    def apm_terse(self, action: dict) -> Optional[str]:
+        return match(action,
+                     {"text": 'message' @ InstanceOf(str), "color": 'c' @ InstanceOf(str)},
+                     lambda c, message: f"set_text_color({c}); display('{message}');",
+                     {"sleep": 'duration' @ InstanceOf(float)}, lambda duration: f"wait({duration});",
+                     {"sound": 'url' @ InstanceOf(str), "format": "ogg"}, lambda url: f"play('{url}');",
+                     {"sound": _, "format": _}, "warning: unsupported audio format",
+                     None)
 
 
 # noinspection PyShadowingNames
 def run_examples():
-    commands = [
-        "quit",
-        "exit",
-        "go north",
-        "go south",
-        "go east",
-        "go west",
-        "go up",
-        "go down",
-        "north",
-        "south",
-        "get sword",
-        "pick up sword",
-        "pick helmet up",
-        "drop sword",
-        "drop crossbow dagger helmet",
-    ]
+    args = {
+        str: [
+            "quit",
+            "exit",
+            "go north",
+            "go south",
+            "go east",
+            "go west",
+            "go up",
+            "go down",
+            "north",
+            "south",
+            "get sword",
+            "pick up sword",
+            "pick helmet up",
+            "drop sword",
+            "drop crossbow dagger helmet",
+        ],
+        Event: [
+            Event(Click((0, 1), Button.LEFT)),
+            Event(Click((0, 1), Button.RIGHT)),
+        ],
+        dict: [
+            {"text": "The shop keeper says 'Ah! We have Camembert, yes sir'", "color": "blue"},
+            {"sleep": 3},
+            {"sleep": 3.0},
+            {"sound": "filename.ogg", "format": "ogg"},
+            {"sound": "filename.mp3", "format": "mp3"},
+        ]
+    }
     styles = [
         Example.pep634,
         Example.apm,
@@ -405,22 +630,23 @@ def run_examples():
     for example in examples:
         print(f"\n👉 {example.__name__} 👈")
         all_timings = {}
-        for command in commands:
+        kind, = get_args(example.__orig_bases__[0])
+        for obj in args[kind]:
             ex = example()
             results = dict()
             timings = dict()
             for style in styles:
                 func = getattr(ex, style.__name__)
                 try:
-                    result = func(command)
-                    time = timeit(lambda: func(command), number=ROUNDS)
+                    result = func(obj)
+                    time = timeit(lambda: func(obj), number=ROUNDS)
                 except MatchError:
                     result = '## match error not handled'
                 except NotImplementedError:
-                    result = NoResult
+                    result = NoValue
                 except Exception as exc:
                     result = f'## exception: {exc}'
-                if result is not NoResult:
+                if result is not NoValue:
                     results[style.__name__] = result
                     # noinspection PyUnboundLocalVariable
                     timings[style.__name__] = time
@@ -429,13 +655,13 @@ def run_examples():
                     all_timings[style.__name__] += time
             result = {*results.values()}
             if len(result) != 1:
-                print(" ", "❌", f"Different results on {example.__name__} for '{command}':")
+                print(" ", "❌", f"Different results on {example.__name__} for '{obj}':")
                 result = [*result]
                 icons = ["🤎", "🧡", "💙", "💜", "💛"]
                 for cmd, res in results.items():
                     print(" ", icons[result.index(res)], f"{cmd} → {res}")
             else:
-                print_detailed(" ", "✅", f"{example.__name__}: {command} → {next(iter(result))}")
+                print_detailed(" ", "✅", f"{example.__name__}: {obj} → {next(iter(result))}")
             second_best = sorted(timings.values())[1]
             print_detailed(" ", "📈", ', '.join(
                 s for s, _ in sorted([(f"{m}: {round(t / second_best, 3)}", t) for m, t in timings.items()],

@@ -18,8 +18,9 @@ pip install awesome-pattern-matching
 - Offers different styles (expression, declarative, statement, ...)
 
 There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
-also [there's a PEP on it's way for a match construct](https://www.python.org/dev/peps/pep-0634/). However, I wanted
-something which works well and works now, so here we are.
+also [since Python 3.10 there is the PEP-634 `match` statement](https://www.python.org/dev/peps/pep-0634/). However,
+this library still offers functionality that PEP-634 doesn't offer, as well as pattern matching for python versions
+before 3.10. [A detailed comparison of PEP-634 and _`apm_` is available](https://github.com/scravy/awesome-pattern-matching/blob/main/docs/apm_vs_pep634.md).
 
 _`apm`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
 variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack, but which also
@@ -29,8 +30,8 @@ makes pattern matching useful in the first place - the capability to easily extr
 from apm import *
 
 if result := match([1, 2, 3, 4, 5], [1, '2nd' @ _, '3rd' @ _, 'tail' @ Remaining(...)]):
-    print(result['2nd'])  # 2
-    print(result['3rd'])  # 3
+    print(result['2nd'])   # 2
+    print(result['3rd'])   # 3
     print(result['tail'])  # [4, 5]
 
 # If you find it more readable, '>>' can be used instead of '@' to capture a variable
@@ -651,7 +652,7 @@ match({"a": 1, "b": 2}, EachItem(Regex("[a-z]+"), InstanceOf(int)))
 ```
 
 
-### `Some(pattern)`
+### `Some(pattern)` (aka `Many` and `Remaining`)
 
 Matches a sequence of items within a list:
 
@@ -872,6 +873,28 @@ if result := match(request, Items(
     print(repr(result['time']))      # datetime(2020, 8, 27, 14, 9, 30)
     print('container' not in result) # True
     print(result['command'])         # "echo 'booya'"
+```
+
+
+### `Object(type, *args, **kwargs)`
+
+Matches any object of the specific type with the given attrs as in `**kwargs`. `*attrs` respects the
+`__match_args__` introduced by PEP-634.
+
+```python
+from apm import *
+from typing import Literal, Tuple
+
+class Click:
+    __match_args__ = ("position", "button")
+
+    def __init__(self, pos: Tuple[int, int], btn: Literal['left', 'right', 'middle']):
+        self.position = pos
+        self.button = btn
+
+assert match(Click((1, 2), 'left'), Object(Click, (1, 2)))
+assert match(Click((1, 2), 'left'), Object(Click, (1, 2), 'left'))
+assert match(Click((1, 2), 'left'), Object(Click, (1, 2), button='left'))
 ```
 
 
