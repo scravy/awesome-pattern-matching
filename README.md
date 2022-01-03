@@ -470,7 +470,6 @@ add(1, 2)
 - 💚 can return values
 - 🖤 very readable when formatted nicely
 - 🖤 not so well suited for larger match actions
-- 🖤 does not work nicely with auto-formatting tools
 - 🖤 slowest of them all
 
 As the name indicates the "terse" style is terse. It is inspired by the `pampy`
@@ -845,9 +844,9 @@ result := match(record, At(['foo', 'bar', 'quux'], {"value": Capture(..., name="
 ```
 
 
-### `Object(**kwargs))`
+### `Items(**kwargs))`
 
-Mostly syntactic sugar to match a dictionary nicely.
+Mostly syntactic sugar to match a dictionary nicely (and anything that provied an `.items()` method).
 
 ```python
 from apm import *
@@ -861,13 +860,13 @@ request = {
     }
 }
 
-if result := match(request, Object(
+if result := match(request, Items(
     api_version="v1",
     job=Object(
         run_at=Transformed(datetime.fromisoformat, 'time' @ _),
     ) & OneOf(
-        Object(command='command' @ InstanceOf(str)),
-        Object(spawn='container' @ InstanceOf(str)),
+        Items(command='command' @ InstanceOf(str)),
+        Items(spawn='container' @ InstanceOf(str)),
     )
 )):
     print(repr(result['time']))      # datetime(2020, 8, 27, 14, 9, 30)

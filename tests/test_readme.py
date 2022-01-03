@@ -1,5 +1,6 @@
 import unittest
 from dataclasses import dataclass
+from datetime import datetime
 
 from apm import *
 
@@ -259,3 +260,25 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(match([0, [1, 2], [1, 2], 3], [0, Some([1, 2]), 3]))
         self.assertTrue(match(range(1, 10), [1, 2, 'remaining' @ Remaining()]))
         self.assertTrue(match([0, 1, 1, 1, 2, 1], [0, Many(1), Remaining(InstanceOf(int))]))
+
+    def test_items(self):
+        request = {
+            "api_version": "v1",
+            "job": {
+                "run_at": "2020-08-27 14:09:30",
+                "command": "echo 'booya'",
+            }
+        }
+
+        result = match(request, Items(
+            api_version="v1",
+            job=Items(
+                run_at=Transformed(datetime.fromisoformat, 'time' @ _),
+            ) & OneOf(
+                Items(command='command' @ InstanceOf(str)),
+                Items(spawn='container' @ InstanceOf(str)),
+            )
+        ))
+
+        self.assertTrue(result)
+        self.assertEqual("echo 'booya'", result['command'])
