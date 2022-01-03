@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum, auto
 from timeit import timeit
 from typing import Optional, Type, List, TypeVar, Generic, get_args
@@ -12,6 +13,35 @@ from apm.no_value import NoValue
 ROUNDS = int(os.environ.get('ROUNDS', '1000'))
 
 DETAILED = bool(os.environ.get('DETAILED', '').lower() in ('yes', 'true', 'on', '1', 'enabled'))
+
+
+@dataclass
+class Point:
+    x: int
+    y: int
+
+
+class Button(Enum):
+    LEFT = auto()
+    MIDDLE = auto()
+    RIGHT = auto()
+
+
+class Click:
+    __match_args__ = ("position", "button")
+
+    def __init__(self, pos, btn):
+        self.position = pos
+        self.button = btn
+
+
+class Event:
+    def __init__(self, o):
+        self._o = o
+
+    def get(self):
+        return self._o
+
 
 T = TypeVar('T')
 
@@ -370,28 +400,6 @@ class AddingConditionsToPatterns(Example[str]):
         raise NotImplementedError
 
 
-class Button(Enum):
-    LEFT = auto()
-    MIDDLE = auto()
-    RIGHT = auto()
-
-
-class Click:
-    __match_args__ = ("position", "button")
-
-    def __init__(self, pos, btn):
-        self.position = pos
-        self.button = btn
-
-
-class Event:
-    def __init__(self, o):
-        self._o = o
-
-    def get(self):
-        return self._o
-
-
 @example
 class MatchingPositionalAttributes(Example[Event]):
 
@@ -582,6 +590,92 @@ class MatchingBuiltinClasses(Example[dict]):
                      None)
 
 
+@example
+class Literals(Example[int]):
+    def pep634(self, status: int) -> Optional[str]:
+        match status:
+            case 400:
+                return "Bad request"
+            case 404:
+                return "Not found"
+            case 418:
+                return "I'm a teapot"
+            case _:
+                return "Something's wrong with the Internet"
+
+    def apm_expression(self, status: int) -> Optional[str]:
+        return case(status) \
+            .of(400, "Bad request") \
+            .of(404, "Not found") \
+            .of(418, "I'm a teapot") \
+            .otherwise("Something's wrong with the Internet")
+
+
+@example
+class CombineSeveralPatterns(Example[int]):
+    def pep634(self, status: int) -> Optional[str]:
+        match status:
+            case 401 | 403 | 404:
+                return "Not allowed"
+
+    def apm(self, status: int) -> Optional[str]:
+        if match(status, OneOf(401, 403, 404)):
+            return "Not allowed"
+
+
+@example
+class BindVariables(Example[Point]):
+    def pep634(self, point: Point) -> Optional[str]:
+        match point:
+            case Point(0, 0):
+                return "Origin"
+            case Point(0, y):
+                return f"Y={y}"
+            case Point(x, 0):
+                return f"X={x}"
+            case Point(x, y):
+                return f"X={x}, Y={y}"
+            case _:
+                return "## Not a point"
+
+    def apm(self, point: Point) -> Optional[str]:
+        if match(point, Point(0, 0)):
+            return "Origin"
+        if result := match(point, Point(0, 'y' @ _)):
+            return f"Y={result.y}"
+        if result := match(point, Point('x' @ _, 0)):
+            return f"X={result.x}"
+        if result := match(point, Point('x' @ _, 'y' @ _)):
+            return f"X={result.x}, Y={result.y}"
+
+
+@example
+class ListOfPoints(Example[list]):
+    def pep634(self, points: list) -> Optional[str]:
+        match points:
+            case []:
+                return "No points"
+            case [Point(0, 0)]:
+                return "The origin"
+            case [Point(x, y)]:
+                return f"Single point {x}, {y}"
+            case [Point(0, y1), Point(0, y2)]:
+                return f"Two on the Y axis at {y1}, {y2}"
+            case _:
+                return "Something else"
+
+    def apm(self, points: list) -> Optional[str]:
+        if match(points, []):
+            return "No points"
+        if match(points, [Point(0, 0)]):
+            return "The origin"
+        if result := match(points, [Point('x' @ _, 'y' @ _)]):
+            return f"Single point {result.x}, {result.y}"
+        if result := match(points, [Point(0, 'y1' @ _), Point(0, 'y2' @ _)]):
+            return f"Two on the Y axis at {result.y1}, {result.y2}"
+        return "Something else"
+
+
 # noinspection PyShadowingNames
 def run_examples():
     args = {
@@ -612,7 +706,26 @@ def run_examples():
             {"sleep": 3.0},
             {"sound": "filename.ogg", "format": "ogg"},
             {"sound": "filename.mp3", "format": "mp3"},
-        ]
+        ],
+        Point: [
+            Point(0, 0),
+            Point(0, 1),
+            Point(1, 0),
+            Point(1, 1),
+            Point(1, 2),
+            Point(2, 1),
+            Point(2, 2),
+        ],
+        list: [
+            [],
+            [Point(0, 0)],
+            [Point(1, 0)],
+            [Point(0, 2), Point(0, 3)],
+            [Point(2, 3), Point(0, 3)],
+        ],
+        int: [
+            *range(400, 419)
+        ],
     }
     styles = [
         Example.pep634,
@@ -662,11 +775,11 @@ def run_examples():
                     print(" ", icons[result.index(res)], f"{cmd} → {res}")
             else:
                 print_detailed(" ", "✅", f"{example.__name__}: {obj} → {next(iter(result))}")
-            second_best = sorted(timings.values())[1]
+            second_best = sorted(timings.values())[:2][-1]
             print_detailed(" ", "📈", ', '.join(
                 s for s, _ in sorted([(f"{m}: {round(t / second_best, 3)}", t) for m, t in timings.items()],
                                      key=lambda t: t[1])))
-        second_best = sorted(all_timings.values())[1]
+        second_best = sorted(all_timings.values())[:2][-1]
         print("📉", ', '.join(
             s for s, _ in sorted([(f"{m}: {round(t / second_best, 3)}", t) for m, t in all_timings.items()],
                                  key=lambda t: t[1])))

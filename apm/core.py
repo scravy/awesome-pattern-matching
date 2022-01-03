@@ -429,6 +429,7 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
         >>> match(range(0, 10), ['123' @ Many(Between(0, 3)), 'xs' @ Remaining()])
         MatchResult(matches=True, groups={'123': [0, 1, 2, 3], 'xs': [4, 5, 6, 7, 8, 9]})
 
+
     Args:
         at_least (int, optional): No default, which is effectively a default of zero.
         at_most (int, optional): No default.
