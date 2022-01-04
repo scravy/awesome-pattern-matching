@@ -54,10 +54,10 @@ Both PEP-634  and _`apm`_ can match all kinds of patterns:
 | `[action, obj]` | `['action' @ _, 'obj' @ _]` |
 | `["go", direction]` | `["go", 'direction' @ _]` |
 | `["drop", *objects]` | `["drop", 'objects' @ Remaining()]` |
-| _ | _ |
-| `["north"] | ["go", "north"]` | `OneOf(["north"], ["go", "north"])` |
-| `["get", obj] | ["pick", "up", obj] | ["pick", obj, "up"]` | `OneOf(["get", 'obj' @ _], ["pick", "up", 'obj' @ _], ["pick", 'obj' @ _, "up"])` |
-| `["go", ("north" | "south" | "east" | "west") as direction]` | `["go", 'direction' @ OneOf("north", "south", "east", "west")]` |
+| `_` | `_` |
+| <code>["north"] &#124; ["go", "north"]</code> | `OneOf(["north"], ["go", "north"])` |
+| <code>["get", obj] &#124; ["pick", "up", obj] &#124; ["pick", obj, "up"]</code> | `OneOf(["get", 'obj' @ _], ["pick", "up", 'obj' @ _], ["pick", 'obj' @ _, "up"])` |
+| <code>["go", ("north" &#124; "south" &#124; "east" &#124; "west") as direction]</code> | `["go", 'direction' @ OneOf("north", "south", "east", "west")]` |
 | `[a, b, *rest]` | `['a' @ _, 'b' @ _, Remaining('rest' @ _)]` |
 | `{"foo": a, "bar": b, **rest}` | `{"foo": 'a' @ _, "bar": 'b' @ _} ** Remainder('rest' @ _)` |
 | `{"foo": str(x)}` | `{"foo": 'x' @ InstanceOf(str)}` |
