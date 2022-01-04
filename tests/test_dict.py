@@ -103,3 +103,36 @@ class DictionaryMatchingTests(unittest.TestCase):
             "bar": 2,
         }, {"foo": 'foo' @ _, "bar": 'bar' @ _} ** Remainder(Check(lambda x: not x)))
         self.assertTrue(result)
+
+    def test_dict_key_patterns(self):
+        pattern = {
+                      Regex(r'^foo-.+$'): InstanceOf(int),
+                      Regex(r'^bar-.+$'): InstanceOf(float),
+                  } ** Remainder('rest' @ EachItem(_, InstanceOf(str)))
+        value = {
+            "foo-one": 1,
+            "foo-two": 2,
+            "bar-one": 1.0,
+            "bar-two": 2.0,
+            "qux-one": "one",
+            "qux-two": "two",
+        }
+        result = match(value, pattern)
+        self.assertTrue(result)
+        self.assertEqual({"qux-one": "one", "qux-two": "two"}, result['rest'])
+        self.assertFalse(match({**value, 'qux-one': 7}, pattern))
+        self.assertFalse(match({**value, 'foo-one': 'one'}, pattern))
+        self.assertFalse(match({**value, 'bar-one': False}, pattern))
+
+    def test_dict_underscore_pattern(self):
+        result = match({
+            1: {2: 3},
+            2: {3: 4},
+        }, {_: {2: _}})
+        self.assertTrue(result)
+
+        result = match({
+            1: {2: 3},
+            2: {3: 4},
+        }, {_: {4: _}})
+        self.assertFalse(result)

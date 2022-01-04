@@ -643,18 +643,26 @@ def _match_mapping(value, pattern: Union[dict, Remainder], *, ctx: MatchContext,
     possibly_mismatching_keys = set()
     for key_pattern, val_pattern in patterns:
         keys_to_remove = []
-        for key, val in to_be_matched.items():
-            if ctx.match(key, key_pattern):
-                if ctx.match(val, val_pattern):
-                    keys_to_remove.append(key)
-                    if key in possibly_mismatching_keys:
-                        possibly_mismatching_keys.remove(key)
-                else:
-                    if isinstance(key_pattern, Capture):
-                        _, p = key_pattern.get_capture_pattern_chain()
+        if _is_a(key_pattern, Underscore):
+            matches = False
+            for key, val in to_be_matched.items():
+                if ctx.match(key, key_pattern):
+                    if ctx.match(val, val_pattern):
+                        matches = True
+                        keys_to_remove.append(key)
+                        if key in possibly_mismatching_keys:
+                            possibly_mismatching_keys.remove(key)
+                        break
+            if not matches:
+                return ctx.no_match()
+        else:
+            for key, val in to_be_matched.items():
+                if ctx.match(key, key_pattern):
+                    if ctx.match(val, val_pattern):
+                        keys_to_remove.append(key)
+                        if key in possibly_mismatching_keys:
+                            possibly_mismatching_keys.remove(key)
                     else:
-                        p = key_pattern
-                    if not isinstance(p, Underscore):
                         possibly_mismatching_keys.add(key)
         for key in keys_to_remove:
             matched.add(key)

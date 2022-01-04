@@ -283,3 +283,6 @@ class ReadmeExamples(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual("echo 'booya'", result['command'])
         self.assertEqual(datetime(2020, 8, 27, 14, 9, 30), result['time'])
+
+    def test_simple_dict(self):
+        match(value={"key": "value"}, pattern={"key": "value"})
