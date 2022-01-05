@@ -142,7 +142,7 @@ match value:
         print(f"matches '{val}'!")
 ```
 
-Just like PEP-634, _`apm`_ will match a pattern successfully is a subset matches. But _`apm_` can also match
+Just like PEP-634, _`apm`_ will match a pattern successfully is a subset matches. But _`apm`_ can also match
 dictionaries strictly, which will match only if the dictionary matches completely:
 
 ```python
@@ -173,7 +173,7 @@ match value:
         print("This will now not match (as intended) as the remainder is explicitly checked to be empty.")
 ```
 
-While _`apm_` also supports [case guards (see below)](#case-guards) it is not necessary to use any in this case.
+While _`apm`_ also supports [case guards (see below)](#case-guards) it is not necessary to use any in this case.
 
 Additionally _`apm`_ has additional features for matching dictionaries, see [dictionaries.md](dictionaries.md).
 
