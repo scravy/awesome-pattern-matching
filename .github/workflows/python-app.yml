@@ -62,6 +62,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install apm
+        run: |
+          pip install .
       - name: Run Rosetta Script
         run: |
           python3 docs/pep634_vs_different_apm_styles.py
