@@ -44,3 +44,7 @@ jobs:
     - name: Run tests
       run: |
         python -m unittest -v
+    - name: Run rosetta stone
+      run: |
+        pip install .
+        python docs/pep634_vs_different_apm_styles.py
