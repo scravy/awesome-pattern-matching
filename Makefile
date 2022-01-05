@@ -23,6 +23,7 @@ clean:
 
 doctoc:
 	doctoc README.md
+	doctoc docs/
 
 dist: clean
 	python3 setup.py sdist bdist_wheel

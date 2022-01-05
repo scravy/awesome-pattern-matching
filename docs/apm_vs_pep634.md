@@ -43,15 +43,16 @@ It also allows _`apm`_ to be extended. In fact, a lot of the pre-built patterns 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Similarities and Differences](#similarities-and-differences)
   - [Matching data classes](#matching-data-classes)
   - [Matching dictionaries](#matching-dictionaries)
+  - [Strict dictionary matches](#strict-dictionary-matches)
   - [Case guards](#case-guards)
 - [In-Depth comparison](#in-depth-comparison)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 
 ## Similarities and Differences
 
@@ -141,6 +142,8 @@ match value:
     case {"Key": str(val)}:
         print(f"matches '{val}'!")
 ```
+
+### Strict dictionary matches
 
 Just like PEP-634, _`apm`_ will match a pattern successfully is a subset matches. But _`apm`_ can also match
 dictionaries strictly, which will match only if the dictionary matches completely:
