@@ -40,6 +40,19 @@ It also allows _`apm`_ to be extended. In fact, a lot of the pre-built patterns 
 [could equally well be defined by users of the library](https://github.com/scravy/awesome-pattern-matching/blob/main/apm/patterns.py)
 .
 
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Similarities and Differences](#similarities-and-differences)
+  - [Matching data classes](#matching-data-classes)
+  - [Matching dictionaries](#matching-dictionaries)
+  - [Case guards](#case-guards)
+- [In-Depth comparison](#in-depth-comparison)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 ## Similarities and Differences
 
 Both PEP-634 and _`apm`_ can match all kinds of patterns:
