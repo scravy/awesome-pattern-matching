@@ -1,4 +1,4 @@
-import decimal
+import numbers
 import operator as ops
 import re
 from typing import Callable, Optional, Dict, Any
@@ -280,5 +280,5 @@ def Maybe(pattern) -> Pattern:
 
 
 IsTruish = Check(lambda x: bool(x))
-IsNumber = (InstanceOf(int) & ~InstanceOf(bool)) | InstanceOf(float) | InstanceOf(decimal.Decimal)
+IsNumber = InstanceOf(numbers.Number) & ~InstanceOf(bool)
 IsString = InstanceOf(str)
