@@ -198,9 +198,6 @@ case(point) \
     .otherwise(None)
 ```
 
-Though it is arguable whether it's proper support as for example the _simple_
-style already uses `if` statements to emulate the sequenced `match`.
-
 However, often there is no need for case guards as it is often more comfortable to use custom patterns or a pattern from
 the library of pre-defined patterns. For example the following PEP-634 match:
 
@@ -217,7 +214,8 @@ if match(point, Point('x' @ Between(200, 300), 0):
     ...
 ```
 
-This also illustrates one of the strengths of _`apm`_: Reusable patterns can be defined and composed.
+This illustrates one of the core useage patterns of _`apm`_: Custom patterns can be defined
+and re-used (like the `Between` above).
 
 ## In-Depth comparison
 
