@@ -217,6 +217,9 @@ if match(point, Point('x' @ Between(200, 300), 0):
 This illustrates one of the core useage patterns of _`apm`_: Custom patterns can be defined
 and re-used (like the `Between` above).
 
+Additionally _`apm`_ has the `guarded` feature for checking multiple guards in the same match branch,
+see [case_guards.md](dictionaries.md).
+
 ## In-Depth comparison
 
 An in-depth comparison of the two can be found in this python script that compares
