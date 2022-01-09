@@ -1,7 +1,7 @@
-test: lint unittest
-
 unittest:
 	python3 -m unittest -v
+
+test: lint unittest
 
 coverage:
 	rm -f .coverage
