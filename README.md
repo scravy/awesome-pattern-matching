@@ -20,7 +20,7 @@ pip install awesome-pattern-matching
 There's a ton of pattern matching libraries available for python, all with varying degrees of maintenance and usability;
 also [since Python 3.10 there is the PEP-634 `match` statement](https://www.python.org/dev/peps/pep-0634/). However,
 this library still offers functionality that PEP-634 doesn't offer, as well as pattern matching for python versions
-before 3.10. [A detailed comparison of PEP-634 and _`apm_` is available](https://github.com/scravy/awesome-pattern-matching/blob/main/docs/apm_vs_pep634.md).
+before 3.10. [A detailed comparison of PEP-634 and _`apm`_ is available](https://github.com/scravy/awesome-pattern-matching/blob/main/docs/apm_vs_pep634.md).
 
 _`apm`_ defines patterns as objects which are _composable_ and _reusable_. Pieces can be matched and captured into
 variables, much like pattern matching in Haskell or Scala (a feature which most libraries actually lack, but which also
