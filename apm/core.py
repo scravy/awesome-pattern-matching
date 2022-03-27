@@ -468,9 +468,6 @@ class Some(Capturable, Nested, AutoEqHash, AutoRepr):
         self.at_most: Optional[int] = at_most
         self.greedy = greedy
 
-    def __eq__(self, other):
-        return type(self) == type(other) and self.__dict__ == other.__dict__
-
     def count_ok_wrt_at_most(self, count):
         if self.at_most:
             return count <= self.at_most

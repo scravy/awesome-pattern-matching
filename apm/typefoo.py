@@ -78,8 +78,13 @@ class VarArgs(ParamPattern):
 
 
 class KwArgs(ParamPattern):
+    def __init__(self, type_=...):
+        self._type = type_
+
     def match_parameter(self, param: Parameter, ctx: MatchContext) -> MatchResult:
-        return ctx.match_if(param.is_kwargs)
+        if not param.is_kwargs:
+            return ctx.no_match()
+        return ctx.match(param.type_hint, self._type)
 
 
 def mk_pattern(p) -> Union[Pattern, Some]:

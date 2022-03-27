@@ -286,3 +286,35 @@ class ReadmeExamples(unittest.TestCase):
 
     def test_simple_dict(self):
         match(value={"key": "value"}, pattern={"key": "value"})
+
+    def test_parameters(self):
+        def f(x: int, *xs: float, y: str, z: object, **kwargs: bool):
+            pass
+
+        self.assertTrue(match(f, Parameters(int, VarArgs(float), KwArgs(bool), y=str)))
+        self.assertTrue(match(f, Parameters(int, VarArgs(float), KwArgs(bool), y=str, z=object)))
+        self.assertFalse(match(f, Parameters(int, VarArgs(float), KwArgs(int), y=str)))
+
+    def test_parameters_positional(self):
+        def f(x: int, y: float):
+            pass
+
+        self.assertFalse(match(f, Parameters(int)))
+        self.assertTrue(match(f, Parameters(int, float)))
+        self.assertTrue(match(f, Parameters(int, Remaining(_))))
+
+    def test_parameters_kwargs(self):
+        def f(x: int, *, y: str, z: float):
+            pass
+
+        self.assertTrue(match(f, Parameters(int)))
+        self.assertFalse(match(f, Parameters(y=str)))
+        self.assertTrue(match(f, Parameters(int, y=str)))
+
+    def test_parameters_kwargs_strict(self):
+        def f(x: int, *, y: str, z: float):
+            pass
+
+        self.assertFalse(match(f, Strict(Parameters(int))))
+        self.assertFalse(match(f, Strict(Parameters(int, y=str))))
+        self.assertTrue(match(f, Strict(Parameters(int, y=str, z=float))))
