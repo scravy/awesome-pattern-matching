@@ -95,6 +95,7 @@ if match(f, Arguments(int, float) & Returns(int)):
   - [`Check(predicate)`](#checkpredicate)
   - [`InstanceOf(*types)`](#instanceoftypes)
   - [`SubclassOf(*types)`](#subclassoftypes)
+  - [`Parameters(...)`](#parameters)
   - [`Arguments(*types)`](#argumentstypes)
   - [`Returns(type)`](#returnstype)
   - [`Transformed(function, pattern)`](#transformedfunction-pattern)
