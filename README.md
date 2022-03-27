@@ -773,9 +773,64 @@ match(int, SubclassOf(int, float))
 ```
 
 
+### `Parameters(...)`
+
+Matches the parameters of a callable.
+
+```python
+def f(x: int, *xs: float, y: str, **kwargs: bool):
+    pass
+
+
+match(f, Parameters(int, VarArgs(float), y=str, KwArgs(bool)))
+```
+
+Each argument to Parameters is expected to be the type of a positional argument.
+
+`Parameters` matches function signatures if their positional arguments match completely, i.e.
+
+```python
+def f(x: int, y: float):
+    pass
+
+
+print(bool(match(f, Parameters(int))))  # False
+print(bool(match(f, Parameters(int, float))))  # True
+print(bool(match(f, Parameters(int, Remaining(_)))))  # True
+```
+
+Keyword arguments are matched only if they are keyword only arguments. In contrast to positional arguments it matches
+also impartially (which aligns with the non-strict matching behavior with respect to dictionaries):
+
+```python
+def f(x: int, *, y: str, z: float):
+    pass
+
+
+print(bool(match(f, Parameters(int))))  # True
+print(bool(match(f, Parameters(y=str))))  # False – positional parameters not matched
+print(bool(match(f, Parameters(int, y=str))))  # True
+```
+
+This can be changed with `Strict`:
+
+```python
+def f(x: int, *, y: str, z: float):
+    pass
+
+
+print(bool(match(f, Strict(Parameters(int)))))  # False
+print(bool(match(f, Strict(Parameters(int, y=str)))))  # False  (z not mentioned but present)
+print(bool(match(f, Strict(Parameters(int, y=str, z=float)))))  # True  (has y and z exactly)
+```
+
+
 ### `Arguments(*types)`
 
-Matches a callable if it's type annotations correspond to the given types. Very useful for implementing rich APIs.
+<span style="color: red">**DEPRECATED, use `Parameters` instead (see above)**</span>
+
+
+Matches a callable if it's type annotations correspond to the given types.
 
 ```python
 def f(x: int, y: float, z):
