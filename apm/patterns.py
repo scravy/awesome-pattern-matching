@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numbers
 import operator as ops
 import re

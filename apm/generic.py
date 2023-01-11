@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def _elements(thing):
     try:
         yield from thing.__dict__.values()

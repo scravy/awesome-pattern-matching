@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from itertools import chain
 from typing import Union, Any, Optional
